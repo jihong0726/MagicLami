@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V6.2 - 实战修正版</title>
+    <title>MagicLami V6.3 - 实战决策版</title>
     <style>
         :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
@@ -16,36 +16,31 @@
         .p-tab.active { color: #fff; border-color: var(--p1-color); background: #2e7d32; }
         .p-tab.active.opp { border-color: var(--opp-color); background: #e65100; }
 
-        /* 状态条 */
         #phase-bar { padding: 8px 10px; font-size: 0.75rem; background: #000; color: #ffeb3b; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
 
-        /* 桌面区 */
         #table-area { flex: 1; padding: 8px; overflow-y: auto; background: rgba(0,0,0,0.3); }
         .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; }
         .meld-group.focused { border-color: #ffeb3b; background: rgba(255,235,59,0.1); }
         .owner-tag { position: absolute; right: 4px; top: 2px; font-size: 0.6rem; color: rgba(255,255,255,0.4); }
 
-        /* 卡牌样式 */
         .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 48px; font-weight: bold; font-size: 1rem; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); margin: 2px; border: 1px solid #ccc; color: #212121; }
         .card.red { color: #d32f2f; }
         .card.joker { color: #fbc02d; font-size: 0.7rem; border: 2px solid #fbc02d; }
 
-        /* AI 提示池 */
         #ai-panel { padding: 8px; background: #111; border-top: 1px solid #333; max-height: 120px; overflow-y: auto; }
         .hint-item { font-size: 0.85rem; padding: 8px; border-radius: 6px; margin-bottom: 5px; background: #222; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; }
         .hint-btn { background: #4caf50; border: none; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
 
-        /* 底部控制 */
         #player-area { height: 50vh; background: #0a3528; padding: 10px; display: flex; flex-direction: column; position: relative; }
         #hand-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #a5d6a7; }
         #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 6px; padding: 4px; display: flex; flex-wrap: wrap; align-content: flex-start; border: 2px solid transparent; margin-bottom: 8px; }
         #hand-display.active { border-color: var(--p1-color); }
 
-        /* 确认按钮遮罩 */
-        #confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; }
-        .confirm-btn { background: #ffeb3b; color: #000; border: none; padding: 20px 40px; border-radius: 10px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(255,235,59,0.4); }
+        /* 确认手牌 UI 更新 */
+        #confirm-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 20; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .confirm-btn { background: #ffeb3b; color: #000; border: none; padding: 15px 40px; border-radius: 8px; font-size: 1.4rem; font-weight: bold; margin-bottom: 20px; }
+        .cancel-btn { background: none; border: 1px solid #666; color: #aaa; padding: 8px 20px; border-radius: 5px; font-size: 0.9rem; }
 
-        /* 键盘 */
         .keyboard-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
         .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
         .k-btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; box-shadow: 0 3px 0 #999; color: #333; font-size: 1.1rem; }
@@ -78,13 +73,13 @@
 
     <div id="player-area">
         <div id="confirm-overlay">
-            <button class="confirm-btn" onclick="confirmInitialHand()">确认初始手牌</button>
-            <p style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">点此开始 AI 算牌</p>
+            <button class="confirm-btn" onclick="confirmHand(true)">✅ 确认 20 张手牌</button>
+            <button class="cancel-btn" onclick="confirmHand(false)">❌ 点错了，返回修改</button>
         </div>
 
         <div id="hand-header">
             <span>我的手牌 (<span id="hand-count">0</span> / 20)</span>
-            <button onclick="resetApp()" style="background:none; border:none; color:#ff4444; font-size:0.7rem;">清空重置</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:#ff4444; font-size:0.7rem;">清空重置</button>
         </div>
         <div id="hand-display" onclick="switchPlayer(0)"></div>
 
@@ -121,7 +116,7 @@
     const rankVal = { 'A':1, 'J':11, 'Q':12, 'K':13, 'Joker':99 };
     const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5 };
 
-    function getCardVal(rank) { return rankVal[rank] || parseInt(rank); }
+    function getVal(r) { return rankVal[r] || parseInt(r); }
 
     function switchPlayer(p) {
         activeP = p; focusG = -1;
@@ -137,7 +132,7 @@
     }
 
     function inputRank(r) {
-        if (isConfirmed && activeP === 0) return; // 确认后禁止在 P1 录入
+        if (isConfirmed && activeP === 0) return;
         const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : {suit:curS, rank:r, color:curC};
         if (activeP === 0) {
             if (myHand.length < 20) myHand.push(card);
@@ -145,16 +140,19 @@
         } else {
             if (focusG === -1) addNewGroup();
             tableGroups[focusG].cards.push(card);
-            tableGroups[focusG].cards.sort((a,b) => getCardVal(a.rank) - getCardVal(b.rank));
+            tableGroups[focusG].cards.sort((a,b) => getVal(a.rank) - getVal(b.rank));
         }
         render(); calculate();
     }
 
-    function confirmInitialHand() {
-        isConfirmed = true;
+    function confirmHand(ok) {
         document.getElementById('confirm-overlay').style.display = 'none';
-        calculate();
-        render();
+        if (ok) {
+            isConfirmed = true;
+            calculate();
+        } else {
+            isConfirmed = false;
+        }
     }
 
     function addNewGroup() {
@@ -168,43 +166,54 @@
         panel.innerHTML = "";
         
         if (!isConfirmed) {
-            panel.innerHTML = "<div style='color:#666; font-size:0.8rem;'>录满 20 张后点确认开始...</div>";
+            panel.innerHTML = `<div style="color:#666; font-size:0.8rem;">已录入 ${myHand.length}/20 张...</div>`;
             return;
         }
 
         if (!isBroken) {
-            document.getElementById('phase-text').innerText = "🧊 阶段: 寻找破冰方案";
+            document.getElementById('phase-text').innerText = "🧊 寻找破冰方案";
             const suits = ['♠️','♥️','♣️','♦️'];
+            const jokers = myHand.filter(c => c.rank === 'Joker');
+
             suits.forEach(s => {
-                let h = myHand.filter(c => c.suit === s).sort((a,b)=>getCardVal(a.rank)-getCardVal(b.rank));
-                for(let i=0; i<h.length-2; i++) {
-                    const v1 = getCardVal(h[i].rank), v2 = getCardVal(h[i+1].rank), v3 = getCardVal(h[i+2].rank);
-                    if(v2 === v1 + 1 && v3 === v2 + 1) {
-                        const set = [h[i], h[i+1], h[i+2]];
-                        addHint(`🟢 破冰首选: ${s}[${set[0].rank},${set[1].rank},${set[2].rank}]`, () => {
-                            set.forEach(card => myHand.splice(myHand.indexOf(card), 1));
-                            tableGroups.push({ owner:0, cards: set });
-                            isBroken = true;
-                            render(); calculate();
-                        });
+                // 解决对子干扰：去重并排序
+                let uniqueNums = [...new Set(myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
+                
+                for(let i=0; i < uniqueNums.length; i++) {
+                    let v = uniqueNums[i];
+                    // 策略 1: 寻找天然顺子 [v, v+1, v+2]
+                    if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
+                        createHint(`🟢 破冰: ${s}[${v},${v+1},${v+2}]`, s, [v, v+1, v+2]);
+                    }
+                    // 策略 2: 顺子+鬼牌 (后补) [v, v+1, 🤡]
+                    if (jokers.length > 0 && uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
+                        createHint(`🟢 破冰: ${s}[${v},${v+1},🤡]`, s, [v, v+1, 'Joker']);
+                    }
+                    // 策略 3: 顺子+鬼牌 (前补) [🤡, v, v+1]
+                    if (jokers.length > 0 && uniqueNums.includes(v+1) && !uniqueNums.includes(v-1) && v > 1) {
+                        createHint(`🟢 破冰: ${s}[🤡,${v},${v+1}]`, s, ['Joker', v, v+1]);
+                    }
+                    // 策略 4: 顺子+鬼牌 (中间) [v, 🤡, v+2]
+                    if (jokers.length > 0 && uniqueNums.includes(v+2) && !uniqueNums.includes(v+1)) {
+                        createHint(`🟢 破冰: ${s}[${v},🤡,${v+2}]`, s, [v, 'Joker', v+2]);
                     }
                 }
             });
         } else {
-            document.getElementById('phase-text').innerText = "🔥 阶段: 自由博弈中";
+            document.getElementById('phase-text').innerText = "🔥 自由博弈中";
             tableGroups.forEach((g, gIdx) => {
                 if (g.cards.length < 3) return;
                 let rs = g.cards.filter(c => c.rank !== 'Joker');
                 if (rs.length === 0) return;
-                let first = getCardVal(g.cards[0].rank), last = getCardVal(g.cards[g.cards.length-1].rank);
+                let first = getVal(g.cards[0].rank), last = getVal(g.cards[g.cards.length-1].rank);
                 myHand.forEach(h => {
                     if (h.suit === rs[0].suit) {
-                        let hVal = getCardVal(h.rank);
-                        if (hVal === first - 1 || hVal === last + 1) {
-                            addHint(`🟡 接牌建议: [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, () => {
+                        let hV = getVal(h.rank);
+                        if (hV === first - 1 || hV === last + 1) {
+                            addHintUI(`🟡 接牌: [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, () => {
                                 myHand.splice(myHand.indexOf(h), 1);
                                 g.cards.push(h);
-                                g.cards.sort((a,b) => getCardVal(a.rank) - getCardVal(b.rank));
+                                g.cards.sort((a,b) => getVal(a.rank) - getVal(b.rank));
                                 render(); calculate();
                             });
                         }
@@ -212,19 +221,37 @@
                 });
             });
         }
-        if (panel.innerHTML === "" && isConfirmed) panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem;'>暂时没有可执行的操作</div>";
+        if (panel.innerHTML === "" && isConfirmed) panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem;'>暂时没有发现可行的组合，建议抽牌或盖牌</div>";
     }
 
-    function addHint(txt, action) {
+    function createHint(label, suit, ranks) {
+        addHintUI(label, () => {
+            ranks.forEach(r => {
+                let cardRank = (r === 'Joker') ? 'Joker' : (Object.keys(rankVal).find(k => rankVal[k] === r) || r.toString());
+                let cardSuit = (cardRank === 'Joker') ? '🤡' : suit;
+                let idx = myHand.findIndex(c => c.rank === cardRank && c.suit === cardSuit);
+                if (idx > -1) myHand.splice(idx, 1);
+            });
+            let tableCards = ranks.map(r => {
+                let cardRank = (r === 'Joker') ? 'Joker' : (Object.keys(rankVal).find(k => rankVal[k] === r) || r.toString());
+                return { suit: (cardRank === 'Joker' ? '🤡' : suit), rank: cardRank, color: (cardRank === 'Joker' ? 'joker' : curC) };
+            });
+            tableGroups.push({ owner: 0, cards: tableCards.sort((a,b)=>getVal(a.rank)-getVal(b.rank)) });
+            isBroken = true;
+            render(); calculate();
+        });
+    }
+
+    function addHintUI(txt, action) {
         const div = document.createElement('div');
         div.className = 'hint-item';
         div.innerHTML = `<span>${txt}</span><button class="hint-btn">一键出牌</button>`;
-        div.querySelector('button').onclick = () => action();
+        div.querySelector('button').onclick = action;
         document.getElementById('ai-panel').appendChild(div);
     }
 
     function render() {
-        myHand.sort((a,b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : getCardVal(a.rank) - getCardVal(b.rank));
+        myHand.sort((a,b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : getVal(a.rank) - getVal(b.rank));
         document.getElementById('hand-display').innerHTML = myHand.map((c, i) => `<div class="card ${c.color}" onclick="myHand.splice(${i},1);render();calculate();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
         document.getElementById('hand-count').innerText = myHand.length;
         
@@ -238,8 +265,6 @@
         }).join('');
         document.getElementById('pool-stat').innerText = `库: 106 | 出: ${totalOut}`;
     }
-
-    function resetApp() { if(confirm("确定要重置所有牌局吗？")) location.reload(); }
 
     render(); calculate();
 </script>
