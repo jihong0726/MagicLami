@@ -1,0 +1,16 @@
+// 修改原来的 inputCard 函数
+        function inputCard(rank) {
+            const newCard = rank === 'Joker' 
+                ? { suit: '🤡', color: 'joker', rank: 'Joker' } 
+                : { suit: currentSuit, color: currentColor, rank: rank };
+
+            if (inputTarget === 'hand') {
+                myHand.push(newCard);
+                renderHand();
+                // ！！！加这一句：每次摸牌后，AI立刻算一下能不能破冰
+                calculateAndHint(); 
+            } else {
+                tableGroups[inputTarget].push(newCard);
+                renderTable();
+            }
+        }
