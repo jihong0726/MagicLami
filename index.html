@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jihong's MagicLami V3</title>
+    <title>Jihong's MagicLami V4</title>
     <style>
         /* ================= 基础与全局样式 ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; }
@@ -14,7 +14,6 @@
             display: flex; flex-direction: column; height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
         
-        /* 扑克牌样式 */
         .card { background: white; border-radius: 4px; padding: 2px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 50px; font-weight: bold; font-size: 1.1rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.4); margin: 3px; transition: transform 0.1s; border: 1px solid #ccc;}
         .card:active { transform: scale(0.85); opacity: 0.7;}
         .card.red { color: #d32f2f; }
@@ -23,23 +22,24 @@
 
         /* ================= 顶部：桌面区 ================= */
         #table-area { flex: 1; padding: 10px; overflow-y: auto; background: rgba(0, 0, 0, 0.2); border-bottom: 2px solid #0a3528; }
-        .section-title { font-size: 0.85rem; color: #a5d6a7; font-weight: bold; margin-bottom: 8px;}
+        .section-title { font-size: 0.85rem; color: #a5d6a7; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
+        
         .meld-group { background: rgba(255, 255, 255, 0.05); padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 48px; transition: all 0.2s;}
         .meld-group.active-target { border-color: #ffeb3b; background: rgba(255, 235, 59, 0.15); box-shadow: 0 0 8px rgba(255, 235, 59, 0.5); }
 
-        /* ================= 中间：固定的 AI 大脑提示区 ================= */
+        /* ================= 中间：AI 大脑提示区 (支持滚动多条提示) ================= */
         #ai-hint-bar {
-            padding: 12px 10px; background: #1a1a1a; border-bottom: 2px solid #000;
-            display: flex; align-items: center; justify-content: flex-start;
+            padding: 8px 10px; background: #1a1a1a; border-bottom: 2px solid #000;
+            display: flex; flex-direction: column; max-height: 110px; overflow-y: auto;
         }
-        .ai-hint { font-size: 1rem; font-weight: bold; color: #f44336; line-height: 1.4; }
+        .ai-hint-item { font-size: 0.95rem; font-weight: bold; padding: 4px 0; border-bottom: 1px dashed #333; }
+        .ai-hint-item:last-child { border-bottom: none; }
 
         /* ================= 底部：手牌、目标切换与键盘 ================= */
-        #player-area { height: 52vh; display: flex; flex-direction: column; background: #0a3528; padding: 10px; }
+        #player-area { height: 50vh; display: flex; flex-direction: column; background: #0a3528; padding: 10px; }
         #hand-display { flex: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 6px; background: rgba(0,0,0,0.3); padding: 8px; display: flex; align-content: flex-start; flex-wrap: wrap; border: 2px solid transparent; }
         #hand-display.active-target { border-color: #4caf50; background: rgba(76, 175, 80, 0.15); }
         
-        /* 🔥 核心优化：单手拇指控制中枢 */
         #target-controls { display: flex; gap: 8px; margin-bottom: 8px; }
         .target-tab {
             flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: bold; 
@@ -49,7 +49,6 @@
         .target-tab.active-hand { background: #4caf50; color: white; box-shadow: 0 4px 0 #2e7d32; }
         .target-tab.active-table { background: #ffeb3b; color: black; box-shadow: 0 4px 0 #fbc02d; }
 
-        /* 键盘 */
         #input-keyboard { display: flex; flex-direction: column; gap: 8px; }
         .suits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;}
         .ranks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
@@ -67,12 +66,14 @@
 
 <div id="app-container">
     <div id="table-area">
-        <div class="section-title">桌面牌局 (点击牌可删除)</div>
+        <div class="section-title">
+            <span>桌面牌局 (点击牌可删除)</span>
+        </div>
         <div id="table-content"></div>
     </div>
 
-    <div id="ai-hint-bar">
-        <div class="ai-hint" id="ai-hint-text">🔴 暂无建议，请录入手牌</div>
+    <div id="ai-hint-bar" id="ai-hint-text">
+        <div class="ai-hint-item" style="color:#aaa;">⚪ 暂无建议，请录入手牌</div>
     </div>
 
     <div id="player-area">
@@ -81,7 +82,7 @@
 
         <div id="target-controls">
             <button class="target-tab active-hand" id="tab-hand" onclick="setTargetToHand()">👇 录入手牌</button>
-            <button class="target-tab" id="tab-table" onclick="createNewMeld()">👆 新建桌面组</button>
+            <button class="target-tab" id="tab-table" onclick="createNewMeld()">👆 录入桌面新组</button>
         </div>
 
         <div id="input-keyboard">
@@ -99,7 +100,6 @@
                 <button class="btn btn-rank btn-black" onclick="inputCard('5')">5</button>
                 <button class="btn btn-rank btn-black" onclick="inputCard('6')">6</button>
                 <button class="btn btn-rank btn-black" onclick="inputCard('7')">7</button>
-                
                 <button class="btn btn-rank btn-black" onclick="inputCard('8')">8</button>
                 <button class="btn btn-rank btn-black" onclick="inputCard('9')">9</button>
                 <button class="btn btn-rank btn-black" onclick="inputCard('10')">10</button>
@@ -113,12 +113,8 @@
 </div>
 
 <script>
-    // 数据模型
-    let currentSuit = '♠️';
-    let currentColor = 'black';
-    let myHand = [];
-    let tableGroups = [];
-    let inputTarget = 'hand'; 
+    let currentSuit = '♠️', currentColor = 'black';
+    let myHand = [], tableGroups = [], inputTarget = 'hand'; 
     
     const rankToNum = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker': 99 };
     const numToRank = { 1:'A', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10', 11:'J', 12:'Q', 13:'K' };
@@ -130,12 +126,65 @@
         myHand.sort((a, b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : rankToNum[a.rank] - rankToNum[b.rank]);
     }
 
+    // 🔥 核心革命：桌面牌组的“智能基因重排与填缝算法”
+    function sortTableGroup(group) {
+        let jokers = group.filter(c => c.rank === 'Joker');
+        let reals = group.filter(c => c.rank !== 'Joker');
+        if (reals.length === 0) return group;
+
+        let isSet = reals.every(c => c.rank === reals[0].rank);
+        let isRun = reals.every(c => c.suit === reals[0].suit);
+
+        if (isSet) {
+            // 刻子：按黑红梅方排，鬼牌丢最后
+            reals.sort((a, b) => suitOrder[a.suit] - suitOrder[b.suit]);
+            return [...reals, ...jokers];
+        } else if (isRun) {
+            // 顺子：按数字排，并在数字断层处智能插入鬼牌！
+            reals.sort((a, b) => rankToNum[a.rank] - rankToNum[b.rank]);
+            let result = [];
+            let currRank = rankToNum[reals[0].rank];
+            let realIdx = 0;
+            let jCount = jokers.length;
+
+            while (realIdx < reals.length) {
+                let actualRank = rankToNum[reals[realIdx].rank];
+                if (actualRank === currRank) {
+                    result.push(reals[realIdx]);
+                    realIdx++;
+                    currRank++;
+                } else if (actualRank > currRank && jCount > 0) {
+                    // 发现数字断层，且有鬼牌，自动用鬼牌填缝！
+                    result.push({ suit: '🤡', color: 'joker', rank: 'Joker' });
+                    jCount--;
+                    currRank++;
+                } else {
+                    // 断层太大鬼牌不够，强制归位（非法组合暂存状态）
+                    result.push(reals[realIdx]);
+                    realIdx++;
+                    currRank = rankToNum[reals[realIdx-1].rank] + 1;
+                }
+            }
+            // 剩下的多余鬼牌贴在尾巴上
+            while (jCount > 0) {
+                result.push({ suit: '🤡', color: 'joker', rank: 'Joker' });
+                jCount--;
+            }
+            return result;
+        }
+        // 如果乱七八糟啥也不是，就按数字排
+        reals.sort((a, b) => rankToNum[a.rank] - rankToNum[b.rank]);
+        return [...reals, ...jokers];
+    }
+
     function removeCardFromHand(index) { myHand.splice(index, 1); renderHand(); calculateAndHint(); }
     function removeCardFromTable(groupIndex, cardIndex) {
         tableGroups[groupIndex].splice(cardIndex, 1);
         if (tableGroups[groupIndex].length === 0) {
             tableGroups.splice(groupIndex, 1);
             setTargetToHand(); // 删空自动回手牌
+        } else {
+            tableGroups[groupIndex] = sortTableGroup(tableGroups[groupIndex]); // 删牌后重新对齐
         }
         renderTable(); calculateAndHint();
     }
@@ -151,15 +200,39 @@
 
     function inputCard(rank) {
         const newCard = rank === 'Joker' ? { suit: '🤡', color: 'joker', rank: 'Joker' } : { suit: currentSuit, color: currentColor, rank: rank };
-        if (inputTarget === 'hand') { myHand.push(newCard); renderHand(); } 
-        else { tableGroups[inputTarget].push(newCard); renderTable(); }
+        if (inputTarget === 'hand') { 
+            myHand.push(newCard); renderHand(); 
+        } else { 
+            tableGroups[inputTarget].push(newCard); 
+            // 每次录入桌面牌，瞬间执行智能排序填缝！
+            tableGroups[inputTarget] = sortTableGroup(tableGroups[inputTarget]);
+            renderTable(); 
+        }
         calculateAndHint(); 
     }
 
-    function setTargetToHand() { inputTarget = 'hand'; updateTargetUI(); }
+    function cleanEmptyGroups() {
+        tableGroups = tableGroups.filter(g => g.length > 0);
+    }
+
+    function setTargetToHand() { 
+        cleanEmptyGroups(); // 回到手牌时，桌面没填牌的空组自动销毁
+        inputTarget = 'hand'; 
+        renderTable(); // 刷新清理效果
+        updateTargetUI(); 
+    }
+
     function setTargetToTableGroup(index) { inputTarget = index; updateTargetUI(); }
+    
     function createNewMeld() {
-        tableGroups.push([]); inputTarget = tableGroups.length - 1; 
+        // 防呆设计：如果已经有空组了，直接选中它，不再无限套娃创建
+        let emptyIdx = tableGroups.findIndex(g => g.length === 0);
+        if (emptyIdx !== -1) {
+            inputTarget = emptyIdx;
+        } else {
+            tableGroups.push([]); 
+            inputTarget = tableGroups.length - 1; 
+        }
         renderTable(); updateTargetUI();
     }
 
@@ -173,7 +246,7 @@
         if (inputTarget === 'hand') {
             document.getElementById('hand-display').classList.add('active-target');
             tabHand.classList.add('active-hand');
-            tabTable.innerText = '👆 新建桌面组';
+            tabTable.innerText = '👆 录入桌面新组';
         } else {
             let melds = document.querySelectorAll('.meld-group');
             if(melds[inputTarget]) melds[inputTarget].classList.add('active-target');
@@ -198,9 +271,9 @@
         updateTargetUI(); 
     }
 
-    // 🔥 优化版 AI：死保鬼牌逻辑
-    function findIceBreaker() {
-        if (myHand.length < 3) return null;
+    // 🔥 破冰计算重构：彻底去重并输出多种优选策略
+    function findIceBreakers() {
+        if (myHand.length < 3) return [];
         let jokers = myHand.filter(c => c.rank === 'Joker');
         let regularCards = myHand.filter(c => c.rank !== 'Joker');
         let possibleMelds = [];
@@ -213,7 +286,7 @@
             for (let i = 0; i < nums.length; i++) {
                 let startNum = nums[i];
 
-                // 1. 优先尝试纯天然顺子 (0 鬼牌)
+                // 尝试无鬼牌天胡顺子
                 let seqNatural = [startNum];
                 let curr = startNum;
                 while (nums.includes(curr + 1)) { curr++; seqNatural.push(curr); }
@@ -221,7 +294,7 @@
                     possibleMelds.push({ suit: suit, cards: seqNatural.map(val => numToRank[val]), jokerCount: 0, length: seqNatural.length });
                 }
 
-                // 2. 如果有鬼牌，尝试带鬼牌的顺子
+                // 尝试带鬼牌顺子
                 if (jokers.length > 0) {
                     let availableJokers = jokers.length;
                     let seqJoker = [startNum];
@@ -233,10 +306,9 @@
                         if (nextVal > 13) break; 
                         if (nums.includes(nextVal)) { seqJoker.push(nextVal); currJoker = nextVal; } 
                         else if (availableJokers > 0) { seqJoker.push('Joker'); availableJokers--; usedJokers++; currJoker = nextVal; } 
-                        else { break; }
+                        else break; 
                     }
                     if (seqJoker.length >= 3 && usedJokers > 0) {
-                        // 剔除掉末尾无意义的鬼牌延伸，防止强行浪费
                         let finalSeq = [...seqJoker]; let finalUsed = usedJokers;
                         while(finalSeq[finalSeq.length-1] === 'Joker' && finalSeq.length > 3) { finalSeq.pop(); finalUsed--; }
                         possibleMelds.push({ suit: suit, cards: finalSeq.map(val => val === 'Joker' ? '🤡' : numToRank[val]), jokerCount: finalUsed, length: finalSeq.length });
@@ -245,15 +317,25 @@
             }
         }
         
-        if (possibleMelds.length > 0) {
-            // 🔥 核心战术排序：优先选鬼牌用得最少的，如果都没用鬼牌，选最长的
-            possibleMelds.sort((a, b) => {
-                if (a.jokerCount !== b.jokerCount) return a.jokerCount - b.jokerCount; 
-                return b.length - a.length;
-            });
-            return possibleMelds[0]; 
-        }
-        return null; 
+        // 子集去重过滤（比如有了 2,3,4,5，就不需要单独显示 3,4,5）
+        let uniqueMelds = [];
+        possibleMelds.forEach(meld => {
+            let meldStr = meld.cards.join(',');
+            let isSubset = uniqueMelds.some(u => u.suit === meld.suit && u.cards.join(',').includes(meldStr));
+            if (!isSubset) {
+                // 反向过滤：新来的如果更大，把老的小弟踢掉
+                uniqueMelds = uniqueMelds.filter(u => !(u.suit === meld.suit && meldStr.includes(u.cards.join(','))));
+                uniqueMelds.push(meld);
+            }
+        });
+
+        // 打分排序：优先最少鬼牌，其次最长顺子
+        uniqueMelds.sort((a, b) => {
+            if (a.jokerCount !== b.jokerCount) return a.jokerCount - b.jokerCount; 
+            return b.length - a.length;
+        });
+
+        return uniqueMelds; 
     }
 
     function findValidAppends() {
@@ -283,20 +365,29 @@
     }
 
     function calculateAndHint() {
-        let hintText = document.getElementById('ai-hint-text');
-        let bestIceBreaker = findIceBreaker();
+        let hintBar = document.getElementById('ai-hint-bar');
+        let bestIceBreakers = findIceBreakers();
         let appendHints = findValidAppends();
         let hintMessages = [];
 
-        if (bestIceBreaker) hintMessages.push(`🟢 破冰首选：出 ${bestIceBreaker.suit} [${bestIceBreaker.cards.join(', ')}]`);
+        // 展示多维破冰选择（最多前 3 种最优解）
+        if (bestIceBreakers.length > 0) {
+            let maxShow = Math.min(3, bestIceBreakers.length);
+            for(let i=0; i<maxShow; i++){
+                let ib = bestIceBreakers[i];
+                hintMessages.push(`🟢 破冰备选 ${i+1}：出 ${ib.suit} [${ib.cards.join(', ')}]`);
+            }
+        }
         if (appendHints.length > 0) hintMessages.push(...appendHints);
 
         if (hintMessages.length > 0) {
-            hintText.innerHTML = hintMessages[0]; 
-            hintText.style.color = hintMessages[0].includes('🟢') ? '#4caf50' : '#ffeb3b';
+            hintBar.innerHTML = hintMessages.map(msg => {
+                let color = msg.includes('🟢') ? '#4caf50' : '#ffeb3b';
+                return `<div class="ai-hint-item" style="color: ${color};">${msg}</div>`;
+            }).join('');
         } else {
-            if(myHand.length === 0) { hintText.innerHTML = `⚪ 请先录入手牌`; hintText.style.color = '#aaa'; } 
-            else { hintText.innerHTML = `🔴 无牌可出，考虑盖掉垃圾牌`; hintText.style.color = '#f44336'; }
+            if(myHand.length === 0) { hintBar.innerHTML = `<div class="ai-hint-item" style="color:#aaa;">⚪ 请先录入手牌</div>`; } 
+            else { hintBar.innerHTML = `<div class="ai-hint-item" style="color:#f44336;">🔴 无牌可出，考虑盖掉垃圾牌</div>`; }
         }
     }
 </script>
