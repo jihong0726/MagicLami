@@ -3,392 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jihong's MagicLami V4</title>
+    <title>MagicLami V5 Pro</title>
     <style>
-        /* ================= 基础与全局样式 ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        #app-container { width: 100%; max-width: 480px; background-color: #0f4c3a; color: white; display: flex; flex-direction: column; height: 100%; position: relative; }
         
-        #app-container {
-            width: 100%; max-width: 480px; background-color: #0f4c3a; color: white; 
-            display: flex; flex-direction: column; height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+        /* 顶部桌面 */
+        #table-area { flex: 1; padding: 10px; overflow-y: auto; background: rgba(0, 0, 0, 0.2); border-bottom: 2px solid #0a3528; }
+        .meld-group { background: rgba(255, 255, 255, 0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 50px; position: relative; }
+        .meld-group.active-target { border-color: #ffeb3b; background: rgba(255, 235, 59, 0.15); }
         
-        .card { background: white; border-radius: 4px; padding: 2px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 50px; font-weight: bold; font-size: 1.1rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.4); margin: 3px; transition: transform 0.1s; border: 1px solid #ccc;}
-        .card:active { transform: scale(0.85); opacity: 0.7;}
+        /* 牌样式 */
+        .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 50px; font-weight: bold; font-size: 1.1rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.4); margin: 2px; border: 1px solid #ccc; color: #212121; }
         .card.red { color: #d32f2f; }
-        .card.black { color: #212121; }
         .card.joker { color: #fbc02d; font-size: 0.8rem; border: 2px solid #fbc02d; }
 
-        /* ================= 顶部：桌面区 ================= */
-        #table-area { flex: 1; padding: 10px; overflow-y: auto; background: rgba(0, 0, 0, 0.2); border-bottom: 2px solid #0a3528; }
-        .section-title { font-size: 0.85rem; color: #a5d6a7; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
-        
-        .meld-group { background: rgba(255, 255, 255, 0.05); padding: 6px; border-radius: 6px; margin-bottom: 6px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 48px; transition: all 0.2s;}
-        .meld-group.active-target { border-color: #ffeb3b; background: rgba(255, 235, 59, 0.15); box-shadow: 0 0 8px rgba(255, 235, 59, 0.5); }
+        /* AI 提示区：点击可直接出牌 */
+        #ai-hint-bar { padding: 8px 10px; background: #1a1a1a; border-bottom: 2px solid #000; display: flex; flex-direction: column; max-height: 120px; overflow-y: auto; }
+        .ai-hint-item { font-size: 0.95rem; font-weight: bold; padding: 8px; margin-bottom: 4px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid #333; }
+        .ai-hint-item:active { transform: scale(0.98); background: rgba(255,255,255,0.1); }
 
-        /* ================= 中间：AI 大脑提示区 (支持滚动多条提示) ================= */
-        #ai-hint-bar {
-            padding: 8px 10px; background: #1a1a1a; border-bottom: 2px solid #000;
-            display: flex; flex-direction: column; max-height: 110px; overflow-y: auto;
-        }
-        .ai-hint-item { font-size: 0.95rem; font-weight: bold; padding: 4px 0; border-bottom: 1px dashed #333; }
-        .ai-hint-item:last-child { border-bottom: none; }
+        /* 操作控制中枢 */
+        #player-area { height: 52vh; display: flex; flex-direction: column; background: #0a3528; padding: 10px; }
+        #hand-display { flex: 1; overflow-y: auto; margin-bottom: 8px; border-radius: 6px; background: rgba(0,0,0,0.3); padding: 6px; display: flex; flex-wrap: wrap; align-content: flex-start; border: 2px solid transparent; }
+        #hand-display.active-target { border-color: #4caf50; }
 
-        /* ================= 底部：手牌、目标切换与键盘 ================= */
-        #player-area { height: 50vh; display: flex; flex-direction: column; background: #0a3528; padding: 10px; }
-        #hand-display { flex: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 6px; background: rgba(0,0,0,0.3); padding: 8px; display: flex; align-content: flex-start; flex-wrap: wrap; border: 2px solid transparent; }
-        #hand-display.active-target { border-color: #4caf50; background: rgba(76, 175, 80, 0.15); }
-        
+        /* 模式切换开关 */
+        #mode-toggle { display: flex; background: #222; border-radius: 8px; margin-bottom: 8px; padding: 2px; }
+        .mode-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; color: #666; font-weight: bold; background: none; }
+        .mode-btn.active { background: #444; color: #ffeb3b; }
+        .mode-btn.broken { background: #4caf50; color: white; }
+
         #target-controls { display: flex; gap: 8px; margin-bottom: 8px; }
-        .target-tab {
-            flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: bold; 
-            background: #222; color: #888; font-size: 0.95rem; box-shadow: 0 4px 0 #111; transition: all 0.1s;
-        }
-        .target-tab:active { transform: translateY(4px); box-shadow: none; }
-        .target-tab.active-hand { background: #4caf50; color: white; box-shadow: 0 4px 0 #2e7d32; }
-        .target-tab.active-table { background: #ffeb3b; color: black; box-shadow: 0 4px 0 #fbc02d; }
+        .control-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: bold; background: #333; color: white; box-shadow: 0 4px 0 #111; }
+        .control-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #111; }
+        .control-btn.active { background: #4caf50; box-shadow: 0 4px 0 #2e7d32; }
 
-        #input-keyboard { display: flex; flex-direction: column; gap: 8px; }
-        .suits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;}
-        .ranks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .btn { background: #e0e0e0; border: none; border-radius: 6px; font-weight: bold; display: flex; align-items: center; justify-content: center; touch-action: manipulation; box-shadow: 0 3px 0 #999; color: #333;}
-        .btn:active { transform: translateY(3px); box-shadow: none; background: #ccc;}
-        .btn-suit { font-size: 1.5rem; padding: 6px 0; }
-        .btn-rank { font-size: 1.1rem; padding: 8px 0; }
+        /* 键盘 */
+        .suits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+        .ranks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; color: #333; box-shadow: 0 3px 0 #999; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #999; }
         .btn-red { color: #d32f2f; }
-        .btn-black { color: #212121; }
-        .btn-joker { background: #fbc02d; color: #000; box-shadow: 0 3px 0 #c89a23;}
-        .selected-suit { box-shadow: 0 3px 0 #2e7d32, inset 0 0 0 2px #4caf50; background: #fff; transform: translateY(0); }
+        .btn-joker { background: #fbc02d; }
     </style>
 </head>
 <body>
 
 <div id="app-container">
     <div id="table-area">
-        <div class="section-title">
-            <span>桌面牌局 (点击牌可删除)</span>
+        <div class="section-title" style="font-size: 0.8rem; color: #a5d6a7; margin-bottom: 5px;">
+            <span>桌面 (点牌删除/点组接牌)</span>
+            <span id="game-phase" style="color: #ff9800;">[🧊 等待破冰]</span>
         </div>
         <div id="table-content"></div>
     </div>
 
-    <div id="ai-hint-bar" id="ai-hint-text">
-        <div class="ai-hint-item" style="color:#aaa;">⚪ 暂无建议，请录入手牌</div>
-    </div>
+    <div id="ai-hint-bar"></div>
 
     <div id="player-area">
-        <div class="section-title" style="margin-bottom: 4px;">我的手牌 (<span id="card-count">0</span>) - 自动排序/点牌删除</div>
-        <div id="hand-display" class="active-target" onclick="setTargetToHand()"></div>
+        <div id="mode-toggle">
+            <button class="mode-btn active" id="btn-phase-ice" onclick="setPhase('ice')">🧊 破冰阶段</button>
+            <button class="mode-btn" id="btn-phase-free" onclick="setPhase('free')">🔥 自由出牌</button>
+        </div>
+
+        <div id="hand-display" class="active-target" onclick="setFocus('hand')"></div>
 
         <div id="target-controls">
-            <button class="target-tab active-hand" id="tab-hand" onclick="setTargetToHand()">👇 录入手牌</button>
-            <button class="target-tab" id="tab-table" onclick="createNewMeld()">👆 录入桌面新组</button>
+            <button class="control-btn active" id="ctrl-hand" onclick="setFocus('hand')">🖐️ 录入手牌</button>
+            <button class="control-btn" id="ctrl-table" onclick="addNewTableGroup()">➕ 记对手牌</button>
         </div>
 
         <div id="input-keyboard">
             <div class="suits">
-                <button class="btn btn-suit btn-black selected-suit" onclick="selectSuit('♠️', 'black', this)">♠️</button>
-                <button class="btn btn-suit btn-red" onclick="selectSuit('♥️', 'red', this)">♥️</button>
-                <button class="btn btn-suit btn-black" onclick="selectSuit('♣️', 'black', this)">♣️</button>
-                <button class="btn btn-suit btn-red" onclick="selectSuit('♦️', 'red', this)">♦️</button>
+                <button class="btn" onclick="setSuit('♠️','black')">♠️</button>
+                <button class="btn btn-red" onclick="setSuit('♥️','red')">♥️</button>
+                <button class="btn" onclick="setSuit('♣️','black')">♣️</button>
+                <button class="btn btn-red" onclick="setSuit('♦️','red')">♦️</button>
             </div>
             <div class="ranks">
-                <button class="btn btn-rank btn-black" onclick="inputCard('A')">A</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('2')">2</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('3')">3</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('4')">4</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('5')">5</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('6')">6</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('7')">7</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('8')">8</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('9')">9</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('10')">10</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('J')">J</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('Q')">Q</button>
-                <button class="btn btn-rank btn-black" onclick="inputCard('K')">K</button>
-                <button class="btn btn-rank btn-joker" onclick="inputCard('Joker')">🤡</button>
+                <button class="btn" onclick="pressKey('A')">A</button>
+                <button class="btn" onclick="pressKey('2')">2</button>
+                <button class="btn" onclick="pressKey('3')">3</button>
+                <button class="btn" onclick="pressKey('4')">4</button>
+                <button class="btn" onclick="pressKey('5')">5</button>
+                <button class="btn" onclick="pressKey('6')">6</button>
+                <button class="btn" onclick="pressKey('7')">7</button>
+                <button class="btn" onclick="pressKey('8')">8</button>
+                <button class="btn" onclick="pressKey('9')">9</button>
+                <button class="btn" onclick="pressKey('10')">10</button>
+                <button class="btn" onclick="pressKey('J')">J</button>
+                <button class="btn" onclick="pressKey('Q')">Q</button>
+                <button class="btn" onclick="pressKey('K')">K</button>
+                <button class="btn btn-joker" onclick="pressKey('Joker')">🤡</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    let currentSuit = '♠️', currentColor = 'black';
-    let myHand = [], tableGroups = [], inputTarget = 'hand'; 
-    
-    const rankToNum = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker': 99 };
-    const numToRank = { 1:'A', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10', 11:'J', 12:'Q', 13:'K' };
-    const suitOrder = { '♠️': 1, '♥️': 2, '♣️': 3, '♦️': 4, '🤡': 5 };
+    let myHand = [], tableGroups = [], focus = 'hand', phase = 'ice';
+    let curSuit = '♠️', curColor = 'black';
+    const rankMap = { 'A':1, 'J':11, 'Q':12, 'K':13, 'Joker':99 };
+    const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5 };
 
-    renderTable(); calculateAndHint();
-
-    function sortHand() {
-        myHand.sort((a, b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : rankToNum[a.rank] - rankToNum[b.rank]);
+    // --- 核心逻辑 ---
+    function setPhase(p) {
+        phase = p;
+        document.getElementById('game-phase').innerText = p === 'ice' ? '[🧊 等待破冰]' : '[🔥 自由出牌]';
+        document.getElementById('btn-phase-ice').classList.toggle('active', p === 'ice');
+        document.getElementById('btn-phase-free').classList.toggle('active', p === 'free');
+        if(p === 'free') document.getElementById('btn-phase-free').classList.add('broken');
+        calculate();
     }
 
-    // 🔥 核心革命：桌面牌组的“智能基因重排与填缝算法”
-    function sortTableGroup(group) {
-        let jokers = group.filter(c => c.rank === 'Joker');
-        let reals = group.filter(c => c.rank !== 'Joker');
-        if (reals.length === 0) return group;
+    function setFocus(f) {
+        focus = f;
+        document.getElementById('ctrl-hand').classList.toggle('active', f === 'hand');
+        document.getElementById('ctrl-table').classList.toggle('active', f !== 'hand');
+        render();
+    }
 
-        let isSet = reals.every(c => c.rank === reals[0].rank);
-        let isRun = reals.every(c => c.suit === reals[0].suit);
+    function addNewTableGroup() {
+        tableGroups.push([]);
+        setFocus(tableGroups.length - 1);
+    }
 
-        if (isSet) {
-            // 刻子：按黑红梅方排，鬼牌丢最后
-            reals.sort((a, b) => suitOrder[a.suit] - suitOrder[b.suit]);
-            return [...reals, ...jokers];
-        } else if (isRun) {
-            // 顺子：按数字排，并在数字断层处智能插入鬼牌！
-            reals.sort((a, b) => rankToNum[a.rank] - rankToNum[b.rank]);
-            let result = [];
-            let currRank = rankToNum[reals[0].rank];
-            let realIdx = 0;
-            let jCount = jokers.length;
-
-            while (realIdx < reals.length) {
-                let actualRank = rankToNum[reals[realIdx].rank];
-                if (actualRank === currRank) {
-                    result.push(reals[realIdx]);
-                    realIdx++;
-                    currRank++;
-                } else if (actualRank > currRank && jCount > 0) {
-                    // 发现数字断层，且有鬼牌，自动用鬼牌填缝！
-                    result.push({ suit: '🤡', color: 'joker', rank: 'Joker' });
-                    jCount--;
-                    currRank++;
-                } else {
-                    // 断层太大鬼牌不够，强制归位（非法组合暂存状态）
-                    result.push(reals[realIdx]);
-                    realIdx++;
-                    currRank = rankToNum[reals[realIdx-1].rank] + 1;
-                }
-            }
-            // 剩下的多余鬼牌贴在尾巴上
-            while (jCount > 0) {
-                result.push({ suit: '🤡', color: 'joker', rank: 'Joker' });
-                jCount--;
-            }
-            return result;
+    function pressKey(rank) {
+        const card = rank === 'Joker' ? { suit:'🤡', rank:'Joker', color:'joker' } : { suit:curSuit, rank, color:curColor };
+        if (focus === 'hand') myHand.push(card);
+        else {
+            tableGroups[focus].push(card);
+            tableGroups[focus] = smartSort(tableGroups[focus]);
         }
-        // 如果乱七八糟啥也不是，就按数字排
-        reals.sort((a, b) => rankToNum[a.rank] - rankToNum[b.rank]);
-        return [...reals, ...jokers];
+        calculate(); render();
     }
 
-    function removeCardFromHand(index) { myHand.splice(index, 1); renderHand(); calculateAndHint(); }
-    function removeCardFromTable(groupIndex, cardIndex) {
-        tableGroups[groupIndex].splice(cardIndex, 1);
-        if (tableGroups[groupIndex].length === 0) {
-            tableGroups.splice(groupIndex, 1);
-            setTargetToHand(); // 删空自动回手牌
-        } else {
-            tableGroups[groupIndex] = sortTableGroup(tableGroups[groupIndex]); // 删牌后重新对齐
+    function smartSort(group) {
+        let rs = group.filter(c => c.rank !== 'Joker').sort((a, b) => (rankMap[a.rank]||a.rank) - (rankMap[b.rank]||b.rank));
+        let js = group.filter(c => c.rank === 'Joker');
+        if (rs.length > 1 && rs.every(c => c.suit === rs[0].suit)) {
+            let res = [], cur = rankMap[rs[0].rank] || parseInt(rs[0].rank);
+            rs.forEach(c => {
+                while ((rankMap[c.rank]||parseInt(c.rank)) > cur && js.length > 0) { res.push(js.pop()); cur++; }
+                res.push(c); cur++;
+            });
+            return [...res, ...js];
         }
-        renderTable(); calculateAndHint();
+        return [...rs, ...js];
     }
 
-    function selectSuit(suit, color, btnElement) {
-        currentSuit = suit; currentColor = color;
-        document.querySelectorAll('.btn-suit').forEach(btn => btn.classList.remove('selected-suit'));
-        btnElement.classList.add('selected-suit');
-        document.querySelectorAll('.ranks .btn-rank:not(.btn-joker)').forEach(btn => {
-            btn.classList.remove('btn-black', 'btn-red'); btn.classList.add('btn-' + color);
-        });
-    }
-
-    function inputCard(rank) {
-        const newCard = rank === 'Joker' ? { suit: '🤡', color: 'joker', rank: 'Joker' } : { suit: currentSuit, color: currentColor, rank: rank };
-        if (inputTarget === 'hand') { 
-            myHand.push(newCard); renderHand(); 
-        } else { 
-            tableGroups[inputTarget].push(newCard); 
-            // 每次录入桌面牌，瞬间执行智能排序填缝！
-            tableGroups[inputTarget] = sortTableGroup(tableGroups[inputTarget]);
-            renderTable(); 
+    // --- 一键出牌：点击 AI 建议直接执行 ---
+    function autoPlay(type, data) {
+        if (type === 'ice') {
+            data.forEach(cardStr => {
+                let idx = myHand.findIndex(c => (c.rank === 'Joker' && cardStr === '🤡') || (c.rank === cardStr && c.suit === data.suit));
+                if (idx > -1) tableGroups.push(myHand.splice(idx, 1));
+            });
+            tableGroups[tableGroups.length-1] = smartSort(tableGroups[tableGroups.length-1]);
+            setPhase('free');
+        } else if (type === 'append') {
+            let idx = myHand.findIndex(c => c.rank === data.rank && c.suit === data.suit);
+            if (idx > -1) tableGroups[data.gIdx].push(myHand.splice(idx, 1)[0]);
+            tableGroups[data.gIdx] = smartSort(tableGroups[data.gIdx]);
         }
-        calculateAndHint(); 
+        calculate(); render();
     }
 
-    function cleanEmptyGroups() {
-        tableGroups = tableGroups.filter(g => g.length > 0);
-    }
-
-    function setTargetToHand() { 
-        cleanEmptyGroups(); // 回到手牌时，桌面没填牌的空组自动销毁
-        inputTarget = 'hand'; 
-        renderTable(); // 刷新清理效果
-        updateTargetUI(); 
-    }
-
-    function setTargetToTableGroup(index) { inputTarget = index; updateTargetUI(); }
-    
-    function createNewMeld() {
-        // 防呆设计：如果已经有空组了，直接选中它，不再无限套娃创建
-        let emptyIdx = tableGroups.findIndex(g => g.length === 0);
-        if (emptyIdx !== -1) {
-            inputTarget = emptyIdx;
-        } else {
-            tableGroups.push([]); 
-            inputTarget = tableGroups.length - 1; 
-        }
-        renderTable(); updateTargetUI();
-    }
-
-    function updateTargetUI() {
-        document.getElementById('hand-display').classList.remove('active-target');
-        document.querySelectorAll('.meld-group').forEach(el => el.classList.remove('active-target'));
-        let tabHand = document.getElementById('tab-hand');
-        let tabTable = document.getElementById('tab-table');
-        tabHand.className = 'target-tab'; tabTable.className = 'target-tab';
-
-        if (inputTarget === 'hand') {
-            document.getElementById('hand-display').classList.add('active-target');
-            tabHand.classList.add('active-hand');
-            tabTable.innerText = '👆 录入桌面新组';
-        } else {
-            let melds = document.querySelectorAll('.meld-group');
-            if(melds[inputTarget]) melds[inputTarget].classList.add('active-target');
-            tabTable.classList.add('active-table');
-            tabTable.innerText = `👆 录入第 ${inputTarget + 1} 组`;
-        }
-    }
-
-    function renderHand() {
-        sortHand();
-        let html = myHand.map((c, index) => `<div class="card ${c.color}" onclick="removeCardFromHand(${index}); event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
-        document.getElementById('hand-display').innerHTML = html;
-        document.getElementById('card-count').innerText = myHand.length;
-    }
-
-    function renderTable() {
-        let html = tableGroups.map((group, groupIndex) => {
-            let cardsHtml = group.map((c, cardIndex) => `<div class="card ${c.color}" onclick="removeCardFromTable(${groupIndex}, ${cardIndex}); event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
-            return `<div class="meld-group" onclick="setTargetToTableGroup(${groupIndex})">${cardsHtml || '<span style="color:#777; font-size:0.8rem; padding:4px;">(空组)</span>'}</div>`;
-        }).join('');
-        document.getElementById('table-content').innerHTML = html;
-        updateTargetUI(); 
-    }
-
-    // 🔥 破冰计算重构：彻底去重并输出多种优选策略
-    function findIceBreakers() {
-        if (myHand.length < 3) return [];
-        let jokers = myHand.filter(c => c.rank === 'Joker');
-        let regularCards = myHand.filter(c => c.rank !== 'Joker');
-        let possibleMelds = [];
-        const suits = ['♠️', '♥️', '♣️', '♦️'];
-
-        for (let suit of suits) {
-            let suitCards = regularCards.filter(c => c.suit === suit);
-            let nums = [...new Set(suitCards.map(c => rankToNum[c.rank]))].sort((a, b) => a - b);
-            
-            for (let i = 0; i < nums.length; i++) {
-                let startNum = nums[i];
-
-                // 尝试无鬼牌天胡顺子
-                let seqNatural = [startNum];
-                let curr = startNum;
-                while (nums.includes(curr + 1)) { curr++; seqNatural.push(curr); }
-                if (seqNatural.length >= 3) {
-                    possibleMelds.push({ suit: suit, cards: seqNatural.map(val => numToRank[val]), jokerCount: 0, length: seqNatural.length });
-                }
-
-                // 尝试带鬼牌顺子
-                if (jokers.length > 0) {
-                    let availableJokers = jokers.length;
-                    let seqJoker = [startNum];
-                    let currJoker = startNum;
-                    let usedJokers = 0;
-
-                    while (true) {
-                        let nextVal = currJoker + 1;
-                        if (nextVal > 13) break; 
-                        if (nums.includes(nextVal)) { seqJoker.push(nextVal); currJoker = nextVal; } 
-                        else if (availableJokers > 0) { seqJoker.push('Joker'); availableJokers--; usedJokers++; currJoker = nextVal; } 
-                        else break; 
-                    }
-                    if (seqJoker.length >= 3 && usedJokers > 0) {
-                        let finalSeq = [...seqJoker]; let finalUsed = usedJokers;
-                        while(finalSeq[finalSeq.length-1] === 'Joker' && finalSeq.length > 3) { finalSeq.pop(); finalUsed--; }
-                        possibleMelds.push({ suit: suit, cards: finalSeq.map(val => val === 'Joker' ? '🤡' : numToRank[val]), jokerCount: finalUsed, length: finalSeq.length });
-                    }
-                }
-            }
-        }
+    // --- AI 大脑 ---
+    function calculate() {
+        const bar = document.getElementById('ai-hint-bar');
+        bar.innerHTML = "";
         
-        // 子集去重过滤（比如有了 2,3,4,5，就不需要单独显示 3,4,5）
-        let uniqueMelds = [];
-        possibleMelds.forEach(meld => {
-            let meldStr = meld.cards.join(',');
-            let isSubset = uniqueMelds.some(u => u.suit === meld.suit && u.cards.join(',').includes(meldStr));
-            if (!isSubset) {
-                // 反向过滤：新来的如果更大，把老的小弟踢掉
-                uniqueMelds = uniqueMelds.filter(u => !(u.suit === meld.suit && meldStr.includes(u.cards.join(','))));
-                uniqueMelds.push(meld);
-            }
-        });
-
-        // 打分排序：优先最少鬼牌，其次最长顺子
-        uniqueMelds.sort((a, b) => {
-            if (a.jokerCount !== b.jokerCount) return a.jokerCount - b.jokerCount; 
-            return b.length - a.length;
-        });
-
-        return uniqueMelds; 
-    }
-
-    function findValidAppends() {
-        let suggestions = [];
-        let realHandCards = myHand.filter(c => c.rank !== 'Joker');
-        tableGroups.forEach((group, groupIndex) => {
-            if (group.length < 3) return; 
-            let realCardsInGroup = group.filter(c => c.rank !== 'Joker');
-            if (realCardsInGroup.length === 0) return; 
-            let isRun = group.every(c => c.suit === realCardsInGroup[0].suit || c.rank === 'Joker');
-            let isSet = group.every(c => c.rank === realCardsInGroup[0].rank || c.rank === 'Joker');
-
-            realHandCards.forEach(myCard => {
-                let myNum = rankToNum[myCard.rank];
-                if (isSet && myCard.rank === realCardsInGroup[0].rank && group.length < 4 && !realCardsInGroup.some(c => c.suit === myCard.suit)) {
-                    suggestions.push(`🟡 接牌：用 [${myCard.suit}${myCard.rank}] 贴第 ${groupIndex + 1} 组`);
-                } else if (isRun && myCard.suit === realCardsInGroup[0].suit) {
-                    let firstRealIndex = group.findIndex(c => c.rank !== 'Joker');
-                    let firstLogicNum = rankToNum[group[firstRealIndex].rank] - firstRealIndex;
-                    let lastLogicNum = firstLogicNum + group.length - 1;
-                    if (myNum === firstLogicNum - 1 && myNum >= 1) suggestions.push(`🟡 接牌：[${myCard.suit}${myCard.rank}] 接第 ${groupIndex + 1} 组前`);
-                    else if (myNum === lastLogicNum + 1 && myNum <= 13) suggestions.push(`🟡 接牌：[${myCard.suit}${myCard.rank}] 接第 ${groupIndex + 1} 组后`);
+        if (phase === 'ice') {
+            // 简化版破冰搜索
+            let suits = ['♠️','♥️','♣️','♦️'];
+            suits.forEach(s => {
+                let cards = myHand.filter(c => c.suit === s).map(c => rankMap[c.rank] || parseInt(c.rank)).sort((a,b)=>a-b);
+                for(let i=0; i<cards.length-2; i++) {
+                    if(cards[i+1] === cards[i]+1 && cards[i+2] === cards[i]+2) {
+                        let res = [numToRank(cards[i]), numToRank(cards[i+1]), numToRank(cards[i+2])];
+                        let item = document.createElement('div');
+                        item.className = 'ai-hint-item';
+                        item.style.color = '#4caf50';
+                        item.innerHTML = `🟢 破冰首选 (点击执行): ${s} [${res.join(',')}]`;
+                        item.onclick = () => autoPlay('ice', res.map(r => ({suit:s, rank:r})));
+                        bar.appendChild(item);
+                    }
                 }
             });
-        });
-        return suggestions;
+        } else {
+            // 自由接牌搜索
+            tableGroups.forEach((g, gIdx) => {
+                if (g.length < 3) return;
+                let rs = g.filter(c => c.rank !== 'Joker');
+                myHand.forEach(h => {
+                    if (h.suit === rs[0].suit && (rankMap[h.rank] || parseInt(h.rank)) === (rankMap[g[g.length-1].rank] || parseInt(g[g.length-1].rank)) + 1) {
+                        let item = document.createElement('div');
+                        item.className = 'ai-hint-item';
+                        item.style.color = '#ffeb3b';
+                        item.innerHTML = `🟡 接牌 (点击执行): [${h.suit}${h.rank}] 接到第 ${gIdx+1} 组后`;
+                        item.onclick = () => autoPlay('append', {suit:h.suit, rank:h.rank, gIdx});
+                        bar.appendChild(item);
+                    }
+                });
+            });
+        }
+        if (!bar.innerHTML) bar.innerHTML = '<div style="color:#666; font-size:0.8rem;">等待计算结果...</div>';
     }
 
-    function calculateAndHint() {
-        let hintBar = document.getElementById('ai-hint-bar');
-        let bestIceBreakers = findIceBreakers();
-        let appendHints = findValidAppends();
-        let hintMessages = [];
+    function numToRank(n) { return {1:'A', 11:'J', 12:'Q', 13:'K'}[n] || n.toString(); }
+    function setSuit(s, c) { curSuit = s; curColor = c; }
 
-        // 展示多维破冰选择（最多前 3 种最优解）
-        if (bestIceBreakers.length > 0) {
-            let maxShow = Math.min(3, bestIceBreakers.length);
-            for(let i=0; i<maxShow; i++){
-                let ib = bestIceBreakers[i];
-                hintMessages.push(`🟢 破冰备选 ${i+1}：出 ${ib.suit} [${ib.cards.join(', ')}]`);
-            }
-        }
-        if (appendHints.length > 0) hintMessages.push(...appendHints);
-
-        if (hintMessages.length > 0) {
-            hintBar.innerHTML = hintMessages.map(msg => {
-                let color = msg.includes('🟢') ? '#4caf50' : '#ffeb3b';
-                return `<div class="ai-hint-item" style="color: ${color};">${msg}</div>`;
-            }).join('');
-        } else {
-            if(myHand.length === 0) { hintBar.innerHTML = `<div class="ai-hint-item" style="color:#aaa;">⚪ 请先录入手牌</div>`; } 
-            else { hintBar.innerHTML = `<div class="ai-hint-item" style="color:#f44336;">🔴 无牌可出，考虑盖掉垃圾牌</div>`; }
-        }
+    function render() {
+        myHand.sort((a, b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : (rankMap[a.rank]||parseInt(a.rank)) - (rankMap[b.rank]||parseInt(b.rank)));
+        document.getElementById('hand-display').innerHTML = myHand.map((c, i) => `<div class="card ${c.color}" onclick="myHand.splice(${i},1);calculate();render();event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
+        document.getElementById('table-content').innerHTML = tableGroups.map((g, i) => `
+            <div class="meld-group ${focus === i ? 'active-target' : ''}" onclick="setFocus(${i})">
+                ${g.map((c, ci) => `<div class="card ${c.color}" onclick="tableGroups[${i}].splice(${ci},1);render();event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('')}
+            </div>`).join('');
+        document.getElementById('hand-display').classList.toggle('active-target', focus === 'hand');
     }
 </script>
 </body>
