@@ -3,51 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V6 - 实战指挥官</title>
+    <title>MagicLami V6.1 - 实战指挥官</title>
     <style>
-        :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #0f4c3a; }
+        :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); color: white; display: flex; flex-direction: column; height: 100%; }
+        #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); color: white; display: flex; flex-direction: column; height: 100%; border: 1px solid #333; }
 
         /* 顶部席位中枢 */
         #player-hub { display: flex; background: #1a1a1a; padding: 5px; gap: 4px; border-bottom: 2px solid #000; }
-        .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: #666; background: #222; border: 1px solid #333; }
+        .p-tab { flex: 1; padding: 10px 0; text-align: center; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: #666; background: #222; border: 1px solid #333; }
         .p-tab.active { color: #fff; border-color: var(--p1-color); background: #2e7d32; }
         .p-tab.active.opp { border-color: var(--opp-color); background: #e65100; }
 
+        /* 状态条 */
+        #phase-bar { padding: 8px 10px; font-size: 0.75rem; background: #000; color: #ffeb3b; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
+
         /* 桌面区 */
-        #table-area { flex: 1; padding: 8px; overflow-y: auto; background: rgba(0,0,0,0.2); }
+        #table-area { flex: 1; padding: 8px; overflow-y: auto; background: rgba(0,0,0,0.3); }
         .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; }
         .meld-group.focused { border-color: #ffeb3b; background: rgba(255,235,59,0.1); }
-        .owner-tag { position: absolute; right: 4px; top: 2px; font-size: 0.6rem; color: rgba(255,255,255,0.3); }
+        .owner-tag { position: absolute; right: 4px; top: 2px; font-size: 0.6rem; color: rgba(255,255,255,0.4); }
 
         /* 卡牌样式 */
         .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 48px; font-weight: bold; font-size: 1rem; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); margin: 2px; border: 1px solid #ccc; color: #212121; }
         .card.red { color: #d32f2f; }
         .card.joker { color: #fbc02d; font-size: 0.7rem; border: 2px solid #fbc02d; }
 
-        /* AI 战术看板 */
-        #ai-strategy-panel { padding: 8px; background: #1a1a1a; border-top: 1px solid #000; max-height: 100px; overflow-y: auto; }
-        .strategy-item { font-size: 0.85rem; padding: 6px; border-radius: 4px; margin-bottom: 4px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .strategy-btn { background: #4caf50; border: none; color: white; padding: 4px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; }
+        /* AI 提示池 */
+        #ai-panel { padding: 8px; background: #111; border-top: 1px solid #333; max-height: 120px; overflow-y: auto; }
+        .hint-item { font-size: 0.85rem; padding: 8px; border-radius: 6px; margin-bottom: 5px; background: #222; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; }
+        .hint-btn { background: #4caf50; border: none; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        .hint-btn:active { transform: scale(0.95); opacity: 0.8; }
 
-        /* 底部控制区 */
-        #player-area { height: 52vh; background: #0a3528; padding: 10px; display: flex; flex-direction: column; border-top: 2px solid #000; }
-        #hand-info { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: #a5d6a7; }
-        #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 4px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 8px; border: 2px solid transparent; }
+        /* 底部控制 */
+        #player-area { height: 50vh; background: #0a3528; padding: 10px; display: flex; flex-direction: column; }
+        #hand-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #a5d6a7; }
+        #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 6px; padding: 4px; display: flex; flex-wrap: wrap; align-content: flex-start; border: 2px solid transparent; margin-bottom: 8px; }
         #hand-display.active { border-color: var(--p1-color); }
 
-        /* 键盘区 */
+        /* 键盘 */
         .keyboard-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
         .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .k-btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; box-shadow: 0 3px 0 #999; color: #333; font-size: 1rem; }
+        .k-btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; box-shadow: 0 3px 0 #999; color: #333; font-size: 1.1rem; }
         .k-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #999; }
-        .k-btn.suit-red { color: #d32f2f; }
-        .k-btn.joker-btn { background: #fbc02d; box-shadow: 0 3px 0 #c89a23; }
-        
-        /* 阶段指示器 */
-        #phase-bar { padding: 4px 10px; font-size: 0.75rem; background: #111; color: #ffeb3b; display: flex; justify-content: space-between; }
+        .k-btn.red { color: #d32f2f; }
+        .k-btn.joker { background: #fbc02d; box-shadow: 0 3px 0 #c89a23; }
+        .btn-active-suit { background: #fff !important; box-shadow: inset 0 0 0 2px var(--p1-color); }
     </style>
 </head>
 <body>
@@ -61,30 +63,30 @@
     </div>
 
     <div id="phase-bar">
-        <span id="phase-text">状态: 🧊 等待破冰</span>
-        <span id="pool-info">总库: 106 | 已出: 0</span>
+        <span id="phase-text">⚖️ 阶段: 录入手牌</span>
+        <span id="pool-stat">库: 106 | 出: 0</span>
     </div>
 
     <div id="table-area">
         <div id="table-content"></div>
-        <button id="new-group-btn" style="width:100%; padding:10px; margin-top:10px; background:#333; color:#fff; border:1px dashed #666; border-radius:8px; display:none;" onclick="addNewGroup()">+ 记录对手新牌组</button>
+        <button id="new-group-btn" style="width:100%; padding:10px; margin-top:10px; background:#444; color:#fff; border:1px dashed #666; border-radius:8px; display:none;" onclick="addNewGroup()">+ 记录对手出的新牌组</button>
     </div>
 
-    <div id="ai-strategy-panel"></div>
+    <div id="ai-panel"></div>
 
     <div id="player-area">
-        <div id="hand-info">
-            <span>我的手牌 (点牌删除)</span>
+        <div id="hand-header">
+            <span>我的手牌 (点牌可删除)</span>
             <span id="hand-count" style="font-weight:bold; color:#fff;">0 / 20</span>
         </div>
         <div id="hand-display" onclick="switchPlayer(0)"></div>
 
         <div id="input-keyboard">
-            <div class="keyboard-row">
-                <button class="k-btn" onclick="setSuit('♠️','black')">♠️</button>
-                <button class="k-btn suit-red" onclick="setSuit('♥️','red')">♥️</button>
-                <button class="k-btn" onclick="setSuit('♣️','black')">♣️</button>
-                <button class="k-btn suit-red" onclick="setSuit('♦️','red')">♦️</button>
+            <div class="keyboard-row" id="suit-btns">
+                <button class="k-btn btn-active-suit" onclick="setSuit('♠️','black', this)">♠️</button>
+                <button class="k-btn red" onclick="setSuit('♥️','red', this)">♥️</button>
+                <button class="k-btn" onclick="setSuit('♣️','black', this)">♣️</button>
+                <button class="k-btn red" onclick="setSuit('♦️','red', this)">♦️</button>
             </div>
             <div class="ranks-grid">
                 <button class="k-btn" onclick="inputRank('A')">A</button>
@@ -100,42 +102,41 @@
                 <button class="k-btn" onclick="inputRank('J')">J</button>
                 <button class="k-btn" onclick="inputRank('Q')">Q</button>
                 <button class="k-btn" onclick="inputRank('K')">K</button>
-                <button class="k-btn joker-btn" onclick="inputRank('Joker')">🤡</button>
+                <button class="k-btn joker" onclick="inputRank('Joker')">🤡</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 数据核心 ---
     let myHand = [], tableGroups = [], activeP = 0, focusG = -1, isBroken = false;
     let curS = '♠️', curC = 'black';
-    const rankVal = { 'A':1, 'J':11, 'Q':12, 'K':13, 'Joker':99 };
-    const suitWeight = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5 };
+    const rankVal = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker':99 };
+    const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5 };
 
-    // --- 智能排序与填缝 ---
-    function smartSort(cards) {
-        let js = cards.filter(c => c.rank === 'Joker');
-        let rs = cards.filter(c => c.rank !== 'Joker').sort((a,b) => rankVal[a.rank] - rankVal[b.rank]);
-        if (rs.length > 1 && rs.every(c => c.suit === rs[0].suit)) {
-            let res = [], expect = rankVal[rs[0].rank];
-            rs.forEach(c => {
-                while(rankVal[c.rank] > expect && js.length > 0) { res.push({suit:'🤡', rank:'Joker', color:'joker'}); expect++; }
-                res.push(c); expect++;
-            });
-            return [...res, ...js];
-        }
-        return [...rs, ...js];
-    }
-
-    // --- 席位管理 ---
     function switchPlayer(p) {
         activeP = p; focusG = -1;
-        document.querySelectorAll('.p-tab').forEach((t, i) => {
-            t.className = `p-tab ${i === p ? 'active' : ''} ${i > 0 && i === p ? 'opp' : ''}`;
-        });
+        document.querySelectorAll('.p-tab').forEach((t, i) => t.className = `p-tab ${i===p?'active':''} ${i>0 && i===p?'opp':''}`);
         document.getElementById('new-group-btn').style.display = p > 0 ? 'block' : 'none';
         render();
+    }
+
+    function setSuit(s, c, btn) {
+        curS = s; curC = c;
+        document.querySelectorAll('#suit-btns .k-btn').forEach(b => b.classList.remove('btn-active-suit'));
+        btn.classList.add('btn-active-suit');
+    }
+
+    function inputRank(r) {
+        const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : {suit:curS, rank:r, color:curC};
+        if (activeP === 0) {
+            if (myHand.length < 20) myHand.push(card);
+        } else {
+            if (focusG === -1) addNewGroup();
+            tableGroups[focusG].cards.push(card);
+            tableGroups[focusG].cards.sort((a,b) => rankVal[a.rank] - rankVal[b.rank]);
+        }
+        render(); calculate();
     }
 
     function addNewGroup() {
@@ -144,64 +145,48 @@
         render();
     }
 
-    function selectGroup(idx) {
-        if (activeP === 0) return; // 自己回合点击桌面仅做查看
-        focusG = idx;
-        render();
-    }
-
-    // --- 键盘录入 ---
-    function setSuit(s, c) { curS = s; curC = c; }
-    function inputRank(r) {
-        const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : {suit:curS, rank:r, color:curC};
-        if (activeP === 0) {
-            if (myHand.length < 20) myHand.push(card);
-        } else {
-            if (focusG === -1) addNewGroup();
-            tableGroups[focusG].cards.push(card);
-            tableGroups[focusG].cards = smartSort(tableGroups[focusG].cards);
-        }
-        render(); updateAI();
-    }
-
-    // --- AI 指挥大脑 (核心逻辑) ---
-    function updateAI() {
-        const panel = document.getElementById('ai-strategy-panel');
+    function calculate() {
+        const panel = document.getElementById('ai-panel');
         panel.innerHTML = "";
         
+        if (myHand.length < 20 && !isBroken) {
+            panel.innerHTML = "<div style='color:#666; font-size:0.8rem;'>请先录满 20 张手牌...</div>";
+            return;
+        }
+
         if (!isBroken) {
-            // 破冰计算
+            document.getElementById('phase-text').innerText = "🧊 阶段: 等待破冰";
             let suits = ['♠️','♥️','♣️','♦️'];
             suits.forEach(s => {
                 let h = myHand.filter(c => c.suit === s).sort((a,b)=>rankVal[a.rank]-rankVal[b.rank]);
                 for(let i=0; i<h.length-2; i++) {
                     if(rankVal[h[i+1].rank] === rankVal[h[i].rank]+1 && rankVal[h[i+2].rank] === rankVal[h[i].rank]+2) {
-                        createHint(`🟢 建议破冰: ${s}[${h[i].rank},${h[i+1].rank},${h[i+2].rank}]`, () => {
-                            let cardsToMove = [h[i], h[i+1], h[i+2]];
-                            cardsToMove.forEach(cm => myHand.splice(myHand.indexOf(cm), 1));
-                            tableGroups.push({ owner:0, cards: cardsToMove });
+                        const set = [h[i], h[i+1], h[i+2]];
+                        addHint(`🟢 建议破冰: ${s}[${set[0].rank},${set[1].rank},${set[2].rank}]`, () => {
+                            set.forEach(card => myHand.splice(myHand.indexOf(card), 1));
+                            tableGroups.push({ owner:0, cards: set });
                             isBroken = true;
-                            document.getElementById('phase-text').innerText = "状态: 🔥 自由博弈";
-                            render(); updateAI();
+                            render(); calculate();
                         });
                     }
                 }
             });
         } else {
-            // 接牌计算
-            tableGroups.forEach((g, idx) => {
+            document.getElementById('phase-text').innerText = "🔥 阶段: 自由博弈";
+            tableGroups.forEach((g, gIdx) => {
+                if (g.cards.length < 3) return;
                 let rs = g.cards.filter(c => c.rank !== 'Joker');
-                if (rs.length < 1) return;
+                if (rs.length === 0) return;
                 let first = rankVal[g.cards[0].rank], last = rankVal[g.cards[g.cards.length-1].rank];
                 myHand.forEach(h => {
                     if (h.suit === rs[0].suit) {
                         let hVal = rankVal[h.rank];
                         if (hVal === first - 1 || hVal === last + 1) {
-                            createHint(`🟡 接牌: 用 [${h.suit}${h.rank}] 接第 ${idx+1} 组`, () => {
+                            addHint(`🟡 接牌: 用 [${h.suit}${h.rank}] 接第 ${gIdx+1} 组`, () => {
                                 myHand.splice(myHand.indexOf(h), 1);
                                 g.cards.push(h);
-                                g.cards = smartSort(g.cards);
-                                render(); updateAI();
+                                g.cards.sort((a,b) => rankVal[a.rank] - rankVal[b.rank]);
+                                render(); calculate();
                             });
                         }
                     }
@@ -210,33 +195,31 @@
         }
     }
 
-    function createHint(txt, action) {
+    function addHint(txt, action) {
         const div = document.createElement('div');
-        div.className = 'strategy-item';
-        div.innerHTML = `<span>${txt}</span><button class="strategy-btn" onclick="this.parentElement.remove()">执行</button>`;
-        div.querySelector('button').onclick = (e) => { e.stopPropagation(); action(); };
-        document.getElementById('ai-strategy-panel').appendChild(div);
+        div.className = 'hint-item';
+        div.innerHTML = `<span>${txt}</span><button class="hint-btn">执行</button>`;
+        div.querySelector('button').onclick = () => action();
+        document.getElementById('ai-panel').appendChild(div);
     }
 
-    // --- 渲染系统 ---
     function render() {
-        // 手牌排序与显示
-        myHand.sort((a,b) => suitWeight[a.suit] !== suitWeight[b.suit] ? suitWeight[a.suit] - suitWeight[b.suit] : rankVal[a.rank] - rankVal[b.rank]);
-        document.getElementById('hand-display').innerHTML = myHand.map((c, i) => `<div class="card ${c.color}" onclick="myHand.splice(${i},1);render();updateAI();event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
+        myHand.sort((a,b) => suitOrder[a.suit] !== suitOrder[b.suit] ? suitOrder[a.suit] - suitOrder[b.suit] : rankVal[a.rank] - rankVal[b.rank]);
+        document.getElementById('hand-display').innerHTML = myHand.map((c, i) => `<div class="card ${c.color}" onclick="myHand.splice(${i},1);render();calculate();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
         document.getElementById('hand-count').innerText = `${myHand.length} / 20`;
-        document.getElementById('hand-display').className = `active-target ${activeP === 0 ? 'active' : ''}`;
-
-        // 桌面显示
+        
         let totalOut = 0;
         document.getElementById('table-content').innerHTML = tableGroups.map((g, i) => {
             totalOut += g.cards.length;
-            return `<div class="meld-group ${focusG === i ? 'focused' : ''}" onclick="selectGroup(${i})">
+            return `<div class="meld-group ${focusG===i?'focused':''}" onclick="focusG=${i};render()">
                 <span class="owner-tag">P${g.owner+1}</span>
-                ${g.cards.map((c, ci) => `<div class="card ${c.color}" onclick="tableGroups[${i}].cards.splice(${ci},1);render();updateAI();event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('')}
+                ${g.cards.map((c, ci) => `<div class="card ${c.color}" onclick="tableGroups[${i}].cards.splice(${ci},1);render();calculate();event.stopPropagation();"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('')}
             </div>`;
         }).join('');
-        document.getElementById('pool-info').innerText = `总库: 106 | 已出: ${totalOut}`;
+        document.getElementById('pool-stat').innerText = `库: 106 | 出: ${totalOut}`;
     }
+
+    render(); calculate();
 </script>
 </body>
 </html>
