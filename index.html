@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V9 - 智能靶向版</title>
+    <title>MagicLami V9.1 - 战术修复版</title>
     <style>
         :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
@@ -20,7 +20,7 @@
         #table-area { flex: 1; padding: 8px; overflow-y: auto; background: rgba(0,0,0,0.3); }
         .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; transition: border 0.2s, background 0.2s; cursor: pointer;}
         
-        /* 🔥 靶向高亮样式 */
+        /* 靶向高亮样式 */
         .meld-group.highlight-target { border-color: #4caf50; background: rgba(76, 175, 80, 0.2); box-shadow: 0 0 10px rgba(76, 175, 80, 0.4); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76,175,80,0.4); } 70% { box-shadow: 0 0 0 10px rgba(76,175,80,0); } 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); } }
         
@@ -166,7 +166,7 @@
             rs.forEach(c => {
                 let curVal = getVal(c.rank);
                 if (curVal === expect - 1) {
-                    res.push(c); // 重复牌并排
+                    res.push(c); 
                 } else {
                     while (curVal > expect && js.length > 0) { res.push(js.pop()); expect++; }
                     res.push(c); expect = curVal + 1;
@@ -248,33 +248,40 @@
         render(); calculateAI();
     }
 
+    // --- 核心修复：带鬼牌的逻辑边界计算 ---
+    function getGroupBounds(cards) {
+        let rs = cards.filter(c => c.rank !== 'Joker');
+        if (rs.length === 0) return null;
+        let isZhan = rs.every(c => c.rank === rs[0].rank);
+        if (isZhan) return { type: 'set', rank: rs[0].rank, suits: rs.map(c=>c.suit) };
+
+        // 顺子：寻找第一个非鬼牌的真实位置，反推首尾
+        let firstRealIdx = cards.findIndex(c => c.rank !== 'Joker');
+        let firstLogicVal = getVal(cards[firstRealIdx].rank) - firstRealIdx;
+        let lastLogicVal = firstLogicVal + cards.length - 1;
+        return { type: 'run', suit: rs[0].suit, first: firstLogicVal, last: lastLogicVal };
+    }
+
     function handleTableGroupClick(groupIndex) {
         let g = tableGroups[groupIndex];
         
         if (activeP === 0 && selectedIndices.size > 0) {
-            // 验证是否符合接牌逻辑（与高亮一致）
             let valid = false;
             if(selectedIndices.size === 1) {
                 let selCard = myHand[Array.from(selectedIndices)[0]];
-                let rs = g.cards.filter(c => c.rank !== 'Joker');
-                if(rs.length > 0) {
-                    let isZhan = rs.every(c => c.rank === rs[0].rank);
-                    if(isZhan) {
-                        if(selCard.rank === rs[0].rank && g.cards.length < 4 && !rs.some(c=>c.suit===selCard.suit)) valid = true;
-                    } else {
-                        if(selCard.suit === rs[0].suit) {
-                            let first = getVal(g.cards[0].rank), last = getVal(g.cards[g.cards.length-1].rank);
-                            let cV = getVal(selCard.rank);
-                            if(cV === first - 1 || cV === last + 1) valid = true;
-                        }
+                let bounds = getGroupBounds(g.cards);
+                
+                if (bounds) {
+                    if (bounds.type === 'set') {
+                        if (selCard.rank === bounds.rank && g.cards.length < 4 && !bounds.suits.includes(selCard.suit)) valid = true;
+                    } else if (bounds.type === 'run') {
+                        let cV = getVal(selCard.rank);
+                        if (selCard.suit === bounds.suit && (cV === bounds.first - 1 || cV === bounds.last + 1)) valid = true;
                     }
                 }
             }
             
-            if(!valid) {
-                alert("非法接牌！请检查花色、数字或是否重复。");
-                return;
-            }
+            if(!valid) { alert("非法接牌！请检查花色、数字或是否重复。"); return; }
 
             let sortedIndices = Array.from(selectedIndices).sort((a,b)=>b-a);
             sortedIndices.forEach(idx => { g.cards.push(myHand[idx]); myHand.splice(idx, 1); });
@@ -315,37 +322,36 @@
         render(); calculateAI();
     }
 
-    function removeBufferCard(index) {
-        oppBuffer.splice(index, 1);
-        render();
-    }
+    function removeBufferCard(index) { oppBuffer.splice(index, 1); render(); }
 
-    // --- AI 大脑引擎 (全模式支持出新组与接牌) ---
+    // --- AI 大脑引擎 (带战术排序) ---
     function calculateAI() {
         const panel = document.getElementById('ai-panel');
         panel.innerHTML = "";
         if (!isGameStarted) return;
 
+        let hints = []; // 存储所有待办提示，以便排序
         const suits = ['♠️','♥️','♣️','♦️'];
         const jokers = myHand.filter(c => c.rank === 'Joker');
 
         if (!isBroken) {
             document.getElementById('phase-text').innerText = "🧊 寻找破冰方案 (含斩牌)";
-            // 找顺子破冰
+            
             suits.forEach(s => {
                 let uniqueNums = [...new Set(myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
-                        createHintUI(`🟢 破冰 (顺): ${s}[${v},${v+1},${v+2}]`, [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:s, rank:v+2}]);
+                        hints.push({ type: 'ice', txt: `🟢 破冰 (顺): ${s}[${v},${v+1},${v+2}]`, jokerCount: 0, 
+                            cards: [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:s, rank:v+2}] });
                     }
                     if (jokers.length > 0 && uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
-                        createHintUI(`🟢 破冰 (顺): ${s}[${v},${v+1},🤡]`, [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:'🤡', rank:'Joker'}]);
+                        hints.push({ type: 'ice', txt: `🟢 破冰 (顺): ${s}[${v},${v+1},🤡]`, jokerCount: 1, 
+                            cards: [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:'🤡', rank:'Joker'}] });
                     }
                 }
             });
 
-            // 找斩牌破冰 (修复斩牌去重)
             let rankKeys = Object.keys(rankVal).filter(k=>k!=='Joker');
             rankKeys.forEach(r => {
                 let sameRanks = myHand.filter(c => c.rank === r);
@@ -353,22 +359,26 @@
                 sameRanks.forEach(c => { if(!uniqueSuits.includes(c.suit)) { uniqueSuits.push(c.suit); validZhan.push(c); }});
                 
                 if (validZhan.length >= 3) {
-                    createHintUI(`🟢 破冰 (斩): [${r},${r},${r}]`, validZhan.slice(0,3));
+                    hints.push({ type: 'ice', txt: `🟢 破冰 (斩): [${r},${r},${r}]`, jokerCount: 0, cards: validZhan.slice(0,3) });
                 } else if (validZhan.length === 2 && jokers.length > 0) {
-                    createHintUI(`🟢 破冰 (斩): [${r},${r},🤡]`, [validZhan[0], validZhan[1], jokers[0]]);
+                    hints.push({ type: 'ice', txt: `🟢 破冰 (斩): [${r},${r},🤡]`, jokerCount: 1, cards: [validZhan[0], validZhan[1], jokers[0]] });
                 }
             });
+            
+            // 破冰策略排序：0 鬼牌优先
+            hints.sort((a, b) => a.jokerCount - b.jokerCount);
 
         } else {
             document.getElementById('phase-text').innerText = "🔥 自由博弈中";
             
-            // 🔥 全火力新增：自由博弈期找手里的新组 (顺子/斩牌)
+            // 找新组
             suits.forEach(s => {
                 let uniqueNums = [...new Set(myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
-                        createHintUI(`🟢 出新组 (顺): ${s}[${v},${v+1},${v+2}]`, [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:s, rank:v+2}]);
+                        hints.push({ type: 'new', txt: `🟢 出新组 (顺): ${s}[${v},${v+1},${v+2}]`, jokerCount: 0, 
+                            cards: [{suit:s, rank:v}, {suit:s, rank:v+1}, {suit:s, rank:v+2}] });
                     }
                 }
             });
@@ -378,32 +388,38 @@
                 let uniqueSuits = [], validZhan = [];
                 sameRanks.forEach(c => { if(!uniqueSuits.includes(c.suit)) { uniqueSuits.push(c.suit); validZhan.push(c); }});
                 if (validZhan.length >= 3) {
-                    createHintUI(`🟢 出新组 (斩): [${r},${r},${r}]`, validZhan.slice(0,3));
+                    hints.push({ type: 'new', txt: `🟢 出新组 (斩): [${r},${r},${r}]`, jokerCount: 0, cards: validZhan.slice(0,3) });
                 }
             });
 
-            // 原有接牌计算逻辑
+            // 找接牌 (修复鬼牌识别)
             tableGroups.forEach((g, gIdx) => {
-                if (g.cards.length < 3) return;
-                let rs = g.cards.filter(c => c.rank !== 'Joker');
-                if (rs.length === 0) return;
-                
-                let isZhan = rs.every(c => c.rank === rs[0].rank);
-                
+                let bounds = getGroupBounds(g.cards);
+                if (!bounds) return;
+
                 myHand.forEach(h => {
-                    if (isZhan && h.rank === rs[0].rank && g.cards.length < 4 && !rs.some(c=>c.suit===h.suit)) {
-                        addHintUI(`🟡 接牌 (斩): [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, h, g, gIdx);
+                    if (bounds.type === 'set' && h.rank === bounds.rank && g.cards.length < 4 && !bounds.suits.includes(h.suit)) {
+                        hints.push({ type: 'append', txt: `🟡 接牌 (斩): [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, handCard: h, group: g, gIdx: gIdx });
                     }
-                    else if (!isZhan && h.suit === rs[0].suit) {
-                        let first = getVal(g.cards[0].rank), last = getVal(g.cards[g.cards.length-1].rank);
+                    else if (bounds.type === 'run' && h.suit === bounds.suit) {
                         let hV = getVal(h.rank);
-                        if (hV === first - 1 || hV === last + 1) {
-                            addHintUI(`🟡 接牌 (顺): [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, h, g, gIdx);
+                        if (hV === bounds.first - 1 || hV === bounds.last + 1) {
+                            hints.push({ type: 'append', txt: `🟡 接牌 (顺): [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组`, handCard: h, group: g, gIdx: gIdx });
                         }
                     }
                 });
             });
         }
+
+        // 渲染提示
+        hints.forEach(hint => {
+            if (hint.type === 'ice' || hint.type === 'new') {
+                createHintUI(hint.txt, hint.cards);
+            } else if (hint.type === 'append') {
+                addHintUI(hint.txt, hint.handCard, hint.group);
+            }
+        });
+
         if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem; text-align:center; padding:5px;'>暂无 AI 推荐，可手动点选组合出牌</div>";
     }
 
@@ -423,7 +439,7 @@
         document.getElementById('ai-panel').appendChild(div);
     }
 
-    function addHintUI(txt, handCard, group, gIdx) {
+    function addHintUI(txt, handCard, group) {
         const div = document.createElement('div');
         div.className = 'hint-item';
         div.innerHTML = `<span>${txt}</span><button class="hint-btn">一键接牌</button>`;
@@ -439,7 +455,7 @@
         document.getElementById('ai-panel').appendChild(div);
     }
 
-    // --- 渲染引擎 (含智能高亮) ---
+    // --- 渲染引擎 ---
     function render() {
         document.getElementById('action-bar').style.display = (selectedIndices.size > 0 && isGameStarted && activeP === 0) ? 'flex' : 'none';
         
@@ -458,23 +474,18 @@
             `<div class="card ${c.color}" onclick="removeBufferCard(${i})"><div>${c.suit}</div><div>${c.rank}</div></div>`
         ).join('');
 
-        // 🔥 智能靶向高亮逻辑计算
+        // 智能靶向高亮：基于逻辑边界算法
         let validTargetGroups = new Set();
         if (activeP === 0 && selectedIndices.size === 1) {
             let selCard = myHand[Array.from(selectedIndices)[0]];
             tableGroups.forEach((g, i) => {
-                if(g.cards.length < 3) return;
-                let rs = g.cards.filter(c => c.rank !== 'Joker');
-                if(rs.length === 0) return;
-                let isZhan = rs.every(c => c.rank === rs[0].rank);
-                
-                if (isZhan) {
-                    if (selCard.rank === rs[0].rank && g.cards.length < 4 && !rs.some(c=>c.suit===selCard.suit)) validTargetGroups.add(i);
-                } else {
-                    if (selCard.suit === rs[0].suit) {
-                        let first = getVal(g.cards[0].rank), last = getVal(g.cards[g.cards.length-1].rank);
+                let bounds = getGroupBounds(g.cards);
+                if (bounds) {
+                    if (bounds.type === 'set' && selCard.rank === bounds.rank && g.cards.length < 4 && !bounds.suits.includes(selCard.suit)) {
+                        validTargetGroups.add(i);
+                    } else if (bounds.type === 'run' && selCard.suit === bounds.suit) {
                         let cV = getVal(selCard.rank);
-                        if (cV === first - 1 || cV === last + 1) validTargetGroups.add(i);
+                        if (cV === bounds.first - 1 || cV === bounds.last + 1) validTargetGroups.add(i);
                     }
                 }
             });
