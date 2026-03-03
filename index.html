@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V15</title>
+    <title>MagicLami V16</title>
     <style>
         :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; --bg-table: rgba(0,0,0,0.3); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; color: white; }
         #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); display: flex; flex-direction: column; height: 100%; position: relative; }
 
-        /* 顶部极简工具栏 */
+        /* 工具栏 */
         #sys-toolbar { display: flex; justify-content: space-between; background: #000; padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid #222; }
         .sys-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
         .sys-btn:active { background: #444; }
@@ -64,7 +64,6 @@
         /* 底部控制区 */
         #player-area { height: 48vh; background: #0a3528; padding: 8px; display: flex; flex-direction: column; position: relative; border-top: 1px solid #000;}
         
-        /* 修复丢失的容器 */
         #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .header-title { font-size: 0.8rem; color: #a5d6a7; font-weight: bold;}
         .header-right { display: flex; gap: 10px; align-items: center; }
@@ -97,7 +96,7 @@
         .btn-active-suit { background: #fff !important; box-shadow: inset 0 0 0 3px var(--p1-color); }
         .k-btn.spacer-btn { background: #444; color: white; box-shadow: 0 3px 0 #111; font-size: 0.8rem;} 
 
-        /* 快捷预测面板 */
+        /* 快捷面板 */
         #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; }
         .qi-box { background:#1e1e1e; padding:15px; border-radius:10px; width:90%; max-width:350px; border: 2px solid #ff9800;}
         .qi-title { color:#ffeb3b; margin-bottom:12px; text-align:center; font-size: 1rem;}
@@ -224,17 +223,16 @@
     const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5, 'none':99 };
 
     function getVal(r) { return rankVal[r]; }
-    // 强制数字转回字符串逻辑 (修复 11->J, 12->Q, 13->K)
     function getRankByVal(val) { return Object.keys(rankVal).find(k => rankVal[k] === val); }
 
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV15', JSON.stringify(state));
+        localStorage.setItem('magicLamiV16', JSON.stringify(state));
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV15');
+        const saved = localStorage.getItem('magicLamiV16');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -248,13 +246,13 @@
             state = JSON.parse(historyStack[historyStack.length - 1]);
             selectedIndices.clear();
             applyUIState(); render(); calculateAI();
-            localStorage.setItem('magicLamiV15', JSON.stringify(state));
+            localStorage.setItem('magicLamiV16', JSON.stringify(state));
         }
     }
 
     function resetGame() {
         if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV15');
+            localStorage.removeItem('magicLamiV16');
             location.reload();
         }
     }
@@ -364,7 +362,6 @@
         if(save) saveState();
     }
 
-    // 录入动作
     function inputRank(r) {
         const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : r === 'Spacer' ? {suit:'none', rank:'Spacer', color:'black'} : {suit:state.curS, rank:r, color:state.curC};
         if (state.activeP === 0) {
@@ -429,7 +426,7 @@
         if (state.isGameStarted) return;
         let count = state.myHand.filter(c=>c.rank!=='Spacer').length;
         state.oppCounts[0] = count;
-        // 关键修复：确保进度条正确更新且不会崩溃
+        
         let txtEl = document.getElementById('hand-count-txt');
         if(txtEl) txtEl.innerText = `${count} / 20`;
         
@@ -533,14 +530,14 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // --- AI 战术大脑 (强制去重与面值转化) ---
+    // --- AI 大脑引擎 (全视野修复版) ---
     function calculateAI() {
         const panel = document.getElementById('ai-panel');
         panel.innerHTML = "";
         if (!state.isGameStarted) return;
 
         let hints = []; 
-        let hintTextSet = new Set(); // 核心：绝对指纹去重验证池
+        let hintTextSet = new Set(); 
         
         const addUniqueHint = (hintObj) => { 
             if (!hintTextSet.has(hintObj.txt)) {
@@ -558,11 +555,27 @@
                 let uniqueNums = [...new Set(state.myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
+                    let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                    
+                    // 1. 天然顺子破冰
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
-                        let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
                         if(r1 && r2 && r3) {
-                            addUniqueHint({ priority: 3, css: 'hint-normal', txt: `🟢 破冰: ${s}[${r1},${r2},${r3}]`, 
+                            addUniqueHint({ priority: 3, css: 'hint-normal', type: 'ice', txt: `🟢 破冰(纯顺): ${s}[${r1},${r2},${r3}]`, 
                                 cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, {suit:s, rank:r3}] });
+                        }
+                    }
+                    
+                    // 2. 鬼牌顺子破冰 (V16 修复点)
+                    if (jokers.length > 0) {
+                        // 缺尾巴
+                        if (uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
+                            if(r1 && r2) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'ice', txt: `🟡 破冰(含鬼): ${s}[${r1},${r2},🤡]`, 
+                                cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, jokers[0]] });
+                        }
+                        // 缺中间
+                        if (!uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
+                            if(r1 && r3) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'ice', txt: `🟡 破冰(含鬼): ${s}[${r1},🤡,${r3}]`, 
+                                cards: [{suit:s, rank:r1}, jokers[0], {suit:s, rank:r3}] });
                         }
                     }
                 }
@@ -594,42 +607,58 @@
                 });
             });
 
-            // 新组判定
+            // 新组判定 (V16 加入鬼牌新组支持)
             suits.forEach(s => {
                 let uniqueNums = [...new Set(state.myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
+                    let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                    
+                    // 天然新组
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
-                        let w1 = getRankByVal(v-1) ? getWildCount(s, getRankByVal(v-1)) : 0;
-                        let w2 = getRankByVal(v+3) ? getWildCount(s, getRankByVal(v+3)) : 0;
-                        let prio = 3, css = 'hint-normal', prefix = '🟡 新组', suffix = '';
-                        if (w1+w2 === 0) { prio = 2; css = 'hint-safe'; prefix = '🟢 安全顺子'; suffix = ' (两端封死)'; }
-                        else if (w1+w2 >= 2) { prio = 5; css = 'hint-danger'; prefix = '🔴 危险投喂'; suffix = ' (易被接走)'; }
-                        
-                        let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
                         if(r1 && r2 && r3) {
-                            addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${prefix}: ${s}[${r1},${r2},${r3}]${suffix}`, 
+                            let risk = (getWildCount(s, getRankByVal(v-1)) > 0) || (getWildCount(s, getRankByVal(v+3)) > 0);
+                            let prio = risk ? 5 : 2;
+                            let css = risk ? 'hint-danger' : 'hint-safe';
+                            let txt = risk ? '🔴 危险投喂' : '🟢 安全新组';
+                            addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${txt}: ${s}[${r1},${r2},${r3}]`, 
                                 cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, {suit:s, rank:r3}] });
+                        }
+                    }
+
+                    // 鬼牌新组
+                    if (jokers.length > 0) {
+                        if (uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
+                            if(r1 && r2) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'new', txt: `🟡 新组(含鬼): ${s}[${r1},${r2},🤡]`, 
+                                cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, jokers[0]] });
+                        }
+                        if (!uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
+                            if(r1 && r3) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'new', txt: `🟡 新组(含鬼): ${s}[${r1},🤡,${r3}]`, 
+                                cards: [{suit:s, rank:r1}, jokers[0], {suit:s, rank:r3}] });
                         }
                     }
                 }
             });
 
+            // 斩牌新组
             Object.keys(rankVal).filter(k=>k!=='Joker'&&k!=='Spacer').forEach(r => {
                 let sameRanks = state.myHand.filter(c => c.rank === r);
                 let uniqueSuits = new Set(), validZhan = [];
                 sameRanks.forEach(c => { if(!uniqueSuits.has(c.suit)) { uniqueSuits.add(c.suit); validZhan.push(c); }});
+                
                 if (validZhan.length >= 3) {
-                    let allSuits = ['♠️','♥️','♣️','♦️'];
-                    let playedSuits = validZhan.slice(0,3).map(c=>c.suit);
-                    let missingSuits = allSuits.filter(ms => !playedSuits.includes(ms));
+                    let missingSuits = ['♠️','♥️','♣️','♦️'].filter(ms => !validZhan.slice(0,3).map(c=>c.suit).includes(ms));
                     let wildMissing = 0;
                     missingSuits.forEach(ms => { wildMissing += getWildCount(ms, r); });
-                    
-                    let prio = 3, css = 'hint-normal', prefix = '🟡 新组(斩)', suffix = '';
-                    if (wildMissing === 0) { prio = 2; css = 'hint-safe'; prefix = '🟢 安全斩牌'; suffix = ' (已绝张)'; }
-                    else { prio = 5; css = 'hint-danger'; prefix = '🔴 危险投喂'; suffix = ' (防被接)'; }
-                    addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${prefix}: [${r},${r},${r}]${suffix}`, cards: validZhan.slice(0,3) });
+                    let prio = wildMissing === 0 ? 2 : 5;
+                    let css = wildMissing === 0 ? 'hint-safe' : 'hint-danger';
+                    let txt = wildMissing === 0 ? '🟢 安全斩牌' : '🔴 危险投喂';
+                    addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${txt}: [${r},${r},${r}]`, cards: validZhan.slice(0,3) });
+                }
+                
+                // 鬼牌斩牌
+                if (validZhan.length === 2 && jokers.length > 0) {
+                    addUniqueHint({ priority: 4, css: 'hint-safe', type: 'new', txt: `🟡 新组(含鬼斩): [${r},${r},🤡]`, cards: [validZhan[0], validZhan[1], jokers[0]] });
                 }
             });
         }
@@ -671,7 +700,7 @@
         document.getElementById('action-bar').style.display = (selectedIndices.size > 0 && state.isGameStarted && state.activeP === 0) ? 'flex' : 'none';
         
         if (state.isGameStarted) groupHand();
-        else updateProgress(); // 调用修复后的更新逻辑
+        else updateProgress();
 
         for(let i=0; i<4; i++) {
             let tab = document.getElementById(`tab-${i}`);
@@ -736,7 +765,6 @@
         document.getElementById('pool-stat').innerText = `总出牌: ${totalOut} 张`;
     }
 
-    // 独立的方法：计算场上和废牌堆的数量
     function countInWorld(suit, rank) {
         let count = 0;
         state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
