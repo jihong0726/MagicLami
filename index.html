@@ -3,120 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V18 - 战术图谱版</title>
+    <title>MagicLami V20 - 拟真重制版</title>
     <style>
-        :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; --bg-table: rgba(0,0,0,0.3); }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        /* 全局主题变量：拟真配色 */
+        :root { 
+            --p1-color: #4caf50; --opp-color: #ff9800; 
+            --bg-felt: radial-gradient(circle at center, #1b4d3e 0%, #0a2118 100%); /* 赌场绿呢绒 */
+            --bg-wood: linear-gradient(to bottom, #5d4037, #3e2723); /* 原木牌架 */
+            --wood-edge: #795548;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Segoe UI', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; color: white; }
-        #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); display: flex; flex-direction: column; height: 100%; position: relative; }
+        #app-container { width: 100%; max-width: 480px; background: var(--bg-felt); display: flex; flex-direction: column; height: 100%; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
 
-        /* 工具栏 */
-        #sys-toolbar { display: flex; justify-content: space-between; background: #000; padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid #222; }
-        .sys-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
-        .sys-btn:active { background: #444; }
+        /* 顶部工具栏 (深色半透明) */
+        #sys-toolbar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.6); padding: 8px 12px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); z-index: 20;}
+        .sys-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ddd; padding: 5px 12px; border-radius: 6px; font-weight: bold; transition: all 0.1s; }
+        .sys-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
 
-        /* 玩家席位 */
-        #player-hub { display: flex; background: #111; padding: 4px; gap: 4px; z-index: 10;}
-        .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: #888; background: #222; position: relative;}
-        .p-tab.active { color: #fff; background: var(--p1-color); box-shadow: 0 2px 5px rgba(76,175,80,0.4); }
-        .p-tab.active.opp { background: var(--opp-color); box-shadow: 0 2px 5px rgba(255,152,0,0.4); }
-        .p-count { font-size: 0.65rem; display: block; color: #bbb; }
+        /* 玩家席位 Tab (立体卡片感) */
+        #player-hub { display: flex; background: rgba(0,0,0,0.4); padding: 6px; gap: 6px; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3);}
+        .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 8px; font-size: 0.8rem; font-weight: bold; color: #aaa; background: rgba(255,255,255,0.05); position: relative; transition: all 0.2s; border: 1px solid transparent;}
+        .p-tab.active { color: #fff; background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 3px 0 #2e7d32, 0 4px 8px rgba(0,0,0,0.4); border: 1px solid #81c784; transform: translateY(-2px); text-shadow: 0 1px 2px rgba(0,0,0,0.3);}
+        .p-tab.active.opp { background: linear-gradient(to bottom, #ffa726, #f57c00); box-shadow: 0 3px 0 #e65100, 0 4px 8px rgba(0,0,0,0.4); border: 1px solid #ffcc80; }
+        .p-count { font-size: 0.65rem; display: block; opacity: 0.8; margin-top: 2px;}
+        .p-tab.danger { animation: flashRed 1s infinite alternate; } 
+        @keyframes flashRed { from { background: rgba(255,255,255,0.05); } to { background: #d32f2f; color: white; border-color:#ff5252; box-shadow: 0 0 10px #ff5252;} }
 
         /* 状态条 */
-        #phase-bar { padding: 6px 10px; font-size: 0.75rem; background: rgba(0,0,0,0.8); color: #ffeb3b; display: flex; justify-content: space-between; }
+        #phase-bar { padding: 6px 12px; font-size: 0.75rem; background: rgba(0,0,0,0.5); color: #ffe082; display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid rgba(0,0,0,0.5); }
 
-        /* 桌面区 */
-        #table-area { flex: 1; padding: 8px; overflow-y: auto; background: var(--bg-table); }
-        .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; gap: 2px; cursor: pointer;}
-        .meld-group.highlight-target { border-color: #4caf50; background: rgba(76, 175, 80, 0.15); box-shadow: 0 0 8px rgba(76, 175, 80, 0.4); }
-        .owner-tag { position: absolute; right: 4px; top: 2px; font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: bold;}
+        /* 桌面区 (毛毡) */
+        #table-area { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .meld-group { background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; display: flex; flex-wrap: wrap; border: 2px solid rgba(255,255,255,0.05); position: relative; gap: 4px; cursor: pointer; transition: all 0.2s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);}
+        .meld-group.highlight-target { border-color: #66bb6a; background: rgba(76, 175, 80, 0.2); box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.3), 0 0 10px rgba(76, 175, 80, 0.5); transform: scale(1.02); z-index: 5;}
+        .owner-tag { position: absolute; right: 6px; top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.2); font-weight: 900; letter-spacing: 1px;}
 
-        /* 卡牌样式 */
-        .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 48px; font-weight: bold; font-size: 1.05rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.5); border: 1px solid #ccc; color: #212121; position: relative; transition: transform 0.1s; pointer-events: none; }
+        /* 🃏 拟真卡牌样式 */
+        .card { background: linear-gradient(to bottom, #ffffff, #f5f5f5); border-radius: 6px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 52px; font-weight: 900; font-size: 1.1rem; box-shadow: 1px 3px 5px rgba(0,0,0,0.5), inset 0 0 2px rgba(255,255,255,0.8); border: none; color: #111; position: relative; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
         .card.red { color: #d32f2f; }
-        .card.joker { color: #fbc02d; font-size: 0.7rem; border: 2px solid #fbc02d; background: #fffde7;}
-        .joker-tag { position: absolute; top: -6px; right: -6px; background: #9c27b0; color: white; font-size: 0.55rem; padding: 2px 4px; border-radius: 4px; z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.5);}
-        .card.spacer { background: transparent; border: 1px dashed #666; box-shadow: none; width: 15px; }
+        .card.joker { color: #fbc02d; font-size: 0.75rem; background: linear-gradient(to bottom, #fffde7, #fff9c4); border: 1px solid #fbc02d;}
+        .joker-tag { position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #ab47bc, #7b1fa2); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 5px; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.5); font-weight: bold;}
+        .card.spacer { background: transparent; border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; width: 15px; color: transparent; }
         
         #hand-display .card, #buffer-cards .card, .meld-group .card { pointer-events: auto; cursor: pointer; }
-        .card.selected { transform: translateY(-8px) scale(1.05); box-shadow: 0 6px 10px rgba(0,0,0,0.7); border: 2px solid var(--p1-color) !important; z-index: 5;}
-        .card.grouped-meld { border: 2px solid #81c784; background: #e8f5e9; }
-
-        /* 🔥 V18 战术提示池 (高度图谱化) */
-        #ai-panel { padding: 6px; background: #111; border-top: 1px solid #000; max-height: 180px; overflow-y: auto; }
-        .hint-item { display: flex; justify-content: space-between; align-items: center; background: #222; border-radius: 6px; padding: 8px; margin-bottom: 6px; border-left: 4px solid #444; border-right: 1px solid #333; border-top: 1px solid #333; border-bottom: 1px solid #333; }
-        .hint-info { display: flex; flex-direction: column; gap: 4px; }
-        .hint-header { display: flex; align-items: center; gap: 6px; }
-        .tactical-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 3px; color: white; background: #555; }
-        .hint-desc { font-size: 0.85rem; font-weight: bold; color: #fff; }
-        .hint-points { font-size: 0.7rem; color: #aaa; }
         
-        .hint-item.urgent { border-left-color: #f44336; background: rgba(244,67,54,0.1); }
-        .hint-item.urgent .tactical-tag { background: #f44336; }
-        .hint-item.safe { border-left-color: #4caf50; background: rgba(76,175,80,0.1); }
-        .hint-item.safe .tactical-tag { background: #4caf50; }
-        .hint-item.danger { border-left-color: #ff9800; background: rgba(255,152,0,0.1); opacity: 0.8; }
-        .hint-item.danger .tactical-tag { background: #ff9800; }
-        
-        .hint-btn { background: #4caf50; border: none; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
-        .hint-btn:active { transform: translateY(2px); box-shadow: none; }
-        .hint-item.urgent .hint-btn { background: #d32f2f; box-shadow: 0 2px 0 #b71c1c; }
+        /* 卡牌选中态：放大上浮，发光描边 */
+        .card.selected { transform: translateY(-12px) scale(1.1); box-shadow: 0 10px 15px rgba(0,0,0,0.6), 0 0 0 3px #66bb6a !important; z-index: 10; }
+        .card.grouped-meld { box-shadow: 0 0 0 2px #81c784, 1px 3px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #e8f5e9, #c8e6c9); }
+        .card.dead-card { filter: grayscale(1) brightness(0.7); opacity: 0.7; }
 
-        /* 底部控制区 */
-        #player-area { height: 48vh; background: #0a3528; padding: 8px; display: flex; flex-direction: column; position: relative; border-top: 1px solid #000;}
-        #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .header-title { font-size: 0.8rem; color: #a5d6a7; font-weight: bold;}
+        /* 🔥 毛玻璃 AI 提示池 */
+        #ai-panel { padding: 8px; background: rgba(0,0,0,0.6); border-top: 1px solid rgba(255,255,255,0.1); max-height: 180px; overflow-y: auto; backdrop-filter: blur(8px); box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
+        .hint-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #444; border-top: 1px solid rgba(255,255,255,0.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .hint-info { display: flex; flex-direction: column; gap: 5px; }
+        .hint-header { display: flex; align-items: center; gap: 8px; }
+        .tactical-tag { font-size: 0.7rem; font-weight: 900; padding: 3px 6px; border-radius: 4px; color: white; background: #555; text-shadow: 0 1px 1px rgba(0,0,0,0.5);}
+        .hint-desc { font-size: 0.9rem; font-weight: bold; color: #fff; letter-spacing: 0.5px;}
+        .hint-points { font-size: 0.7rem; color: #ffd54f; font-weight: bold;}
+        
+        .hint-item.urgent { border-left-color: #f44336; background: linear-gradient(90deg, rgba(244,67,54,0.2), rgba(255,255,255,0.05)); }
+        .hint-item.urgent .tactical-tag { background: #e53935; }
+        .hint-item.safe { border-left-color: #4caf50; background: linear-gradient(90deg, rgba(76,175,80,0.15), rgba(255,255,255,0.05)); }
+        .hint-item.safe .tactical-tag { background: #43a047; }
+        .hint-item.danger { border-left-color: #ff9800; background: linear-gradient(90deg, rgba(255,152,0,0.15), rgba(255,255,255,0.05)); }
+        .hint-item.danger .tactical-tag { background: #fb8c00; }
+        
+        /* 游戏感极强的 3D 按钮 */
+        .hint-btn { background: linear-gradient(to bottom, #66bb6a, #43a047); border: none; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 900; font-size: 0.8rem; box-shadow: 0 3px 0 #2e7d32, 0 4px 6px rgba(0,0,0,0.3); text-shadow: 0 1px 1px rgba(0,0,0,0.3); transition: transform 0.1s, box-shadow 0.1s; cursor: pointer;}
+        .hint-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #2e7d32, 0 1px 2px rgba(0,0,0,0.3); }
+        .hint-item.urgent .hint-btn { background: linear-gradient(to bottom, #ef5350, #e53935); box-shadow: 0 3px 0 #c62828, 0 4px 6px rgba(0,0,0,0.3); }
+
+        /* 🪵 底部原木牌架 */
+        #player-area { height: 48vh; background: var(--bg-wood); padding: 10px; display: flex; flex-direction: column; position: relative; border-top: 4px solid var(--wood-edge); box-shadow: 0 -5px 15px rgba(0,0,0,0.6); z-index: 30;}
+        #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .header-title { font-size: 0.85rem; color: #d7ccc8; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
         .header-right { display: flex; gap: 10px; align-items: center; }
-        .penalty-txt { color: #ff5252; font-weight: bold; font-size: 0.8rem; background: #333; padding: 2px 6px; border-radius: 4px;} 
-        #hand-count-txt { font-weight:bold; color:#ffeb3b; font-size:0.9rem; }
+        .penalty-txt { color: #ff8a80; font-weight: 900; font-size: 0.8rem; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255,138,128,0.3); box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);} 
+        #hand-count-txt { font-weight:900; color:#ffeb3b; font-size:0.9rem; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
         
-        #setup-progress-bar { height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-        #setup-progress-fill { height: 100%; background: #ffeb3b; width: 0%; transition: width 0.3s; }
-        #start-game-btn { display: none; width: 100%; padding: 10px; background: #ffeb3b; color: #000; font-weight: bold; font-size: 1rem; border: none; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(255,235,59,0.3); }
+        #setup-progress-bar { height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-bottom: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);}
+        #setup-progress-fill { height: 100%; background: linear-gradient(90deg, #ffd54f, #ffb300); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        #action-bar { display: none; gap: 6px; margin-bottom: 6px; }
-        .act-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem; color: white; }
-        .btn-play { background: #4caf50; box-shadow: 0 3px 0 #2e7d32; }
-        .btn-delete { background: #d32f2f; box-shadow: 0 3px 0 #b71c1c; flex: 0.4; }
+        /* 巨大化 3D 操作按钮 */
+        #action-bar { display: none; gap: 10px; margin-bottom: 8px; }
+        .act-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 900; font-size: 1rem; color: white; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); transition: transform 0.1s;}
+        .btn-play { background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 4px 0 #2e7d32, 0 5px 10px rgba(0,0,0,0.4); }
+        .btn-play:active { transform: translateY(4px); box-shadow: 0 0 0 #2e7d32, 0 2px 4px rgba(0,0,0,0.4); }
+        .btn-delete { background: linear-gradient(to bottom, #ef5350, #e53935); box-shadow: 0 4px 0 #c62828, 0 5px 10px rgba(0,0,0,0.4); flex: 0.4; }
+        .btn-delete:active { transform: translateY(4px); box-shadow: 0 0 0 #c62828, 0 2px 4px rgba(0,0,0,0.4); }
 
-        /* 暂存区：删除了暗盖按钮 */
-        #opp-buffer-zone { display: none; background: #111; border: 1px dashed #ff9800; border-radius: 6px; padding: 6px; margin-bottom: 6px; align-items: center; justify-content: space-between; }
-        #buffer-cards { display: flex; flex-wrap: wrap; min-height: 48px; flex: 1; gap: 2px;}
-        #buffer-confirm-btn { background: #ff9800; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; height: 100%; margin-left: 6px; box-shadow: 0 3px 0 #e65100; }
+        #opp-buffer-zone { display: none; background: rgba(0,0,0,0.6); border: 2px dashed #ffb300; border-radius: 8px; padding: 8px; margin-bottom: 8px; align-items: center; justify-content: space-between; box-shadow: inset 0 0 10px rgba(255,179,0,0.1);}
+        #buffer-cards { display: flex; flex-wrap: wrap; min-height: 52px; flex: 1; gap: 4px;}
+        #buffer-confirm-btn { background: linear-gradient(to bottom, #ffa726, #f57c00); color: #fff; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 900; height: 100%; margin-left: 8px; box-shadow: 0 4px 0 #e65100; cursor: pointer;}
+        #buffer-confirm-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #e65100; }
 
-        #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 6px; gap: 2px;}
+        /* 手牌槽，稍微增加卡牌间距 */
+        #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 10px 8px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 8px; gap: 4px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05);}
         
+        /* 键盘 */
         .keyboard-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 6px; }
-        .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .k-btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; box-shadow: 0 3px 0 #999; color: #333; font-size: 1.05rem; }
-        .k-btn:active { transform: translateY(3px); box-shadow: none; }
+        .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .k-btn { background: linear-gradient(to bottom, #eeeeee, #e0e0e0); border: none; border-radius: 6px; font-weight: 900; padding: 12px 0; box-shadow: 0 4px 0 #9e9e9e; color: #333; font-size: 1.1rem; cursor: pointer; transition: transform 0.1s;}
+        .k-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #9e9e9e; }
         .k-btn.red { color: #d32f2f; }
-        .k-btn.joker { background: #fbc02d; box-shadow: 0 3px 0 #c89a23; }
-        .btn-active-suit { background: #fff !important; box-shadow: inset 0 0 0 3px var(--p1-color); }
-        .k-btn.spacer-btn { background: #444; color: white; box-shadow: 0 3px 0 #111; font-size: 0.8rem;} 
+        .k-btn.joker { background: linear-gradient(to bottom, #fff59d, #fbc02d); box-shadow: 0 4px 0 #f57f17; }
+        .btn-active-suit { background: #fff !important; box-shadow: 0 2px 0 #9e9e9e, inset 0 0 0 3px var(--p1-color); transform: translateY(2px);}
+        .k-btn.spacer-btn { background: linear-gradient(to bottom, #616161, #424242); color: white; box-shadow: 0 4px 0 #212121; font-size: 0.85rem;} 
 
-        #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; }
-        .qi-box { background:#1e1e1e; padding:15px; border-radius:10px; width:90%; max-width:350px; border: 2px solid #ff9800;}
-        .qi-title { color:#ffeb3b; margin-bottom:12px; text-align:center; font-size: 1rem;}
-        .qi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        /* 弹窗样式精化 */
+        #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(5px);}
+        .qi-box { background: linear-gradient(to bottom, #263238, #1b2023); padding:20px; border-radius:16px; width:92%; max-width:350px; border: 2px solid #ffb300; box-shadow: 0 15px 40px rgba(0,0,0,0.9);}
+        .qi-title { color:#fff; margin-bottom:15px; text-align:center; font-size: 1.1rem; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
+        .qi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .qi-grid.full { grid-template-columns: 1fr; }
-        .qi-btn { padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; color: white; cursor: pointer; }
-        .qi-btn small { font-weight: normal; opacity: 0.85; font-size: 0.7rem; margin-top: 2px; }
-        .btn-run { background: #2196f3; box-shadow: 0 3px 0 #1565c0; }
-        .btn-run-long { background: #0288d1; box-shadow: 0 3px 0 #01579b; }
-        .btn-joker { background: #9c27b0; box-shadow: 0 3px 0 #6a1b9a; }
-        .btn-set { background: #ff9800; box-shadow: 0 3px 0 #e65100; }
-        .qi-btn-cancel { width:100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 6px; font-weight: bold; margin-top: 5px; box-shadow: 0 3px 0 #222; }
+        .qi-btn { padding: 12px 8px; border: none; border-radius: 8px; font-weight: 900; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; color: white; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); transition: transform 0.1s;}
+        .qi-btn:active { transform: translateY(3px); box-shadow: none !important; }
+        .qi-btn small { font-weight: normal; opacity: 0.9; font-size: 0.75rem; margin-top: 4px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;}
+        .btn-run { background: linear-gradient(to bottom, #42a5f5, #1e88e5); box-shadow: 0 4px 0 #1565c0; }
+        .btn-run-long { background: linear-gradient(to bottom, #039be5, #0277bd); box-shadow: 0 4px 0 #01579b; }
+        .btn-joker { background: linear-gradient(to bottom, #ab47bc, #8e24aa); box-shadow: 0 4px 0 #6a1b9a; }
+        .btn-set { background: linear-gradient(to bottom, #ffa726, #fb8c00); box-shadow: 0 4px 0 #ef6c00; }
+        .qi-btn-cancel { width:100%; padding: 14px; background: linear-gradient(to bottom, #757575, #616161); color: #fff; border: none; border-radius: 8px; font-weight: 900; margin-top: 5px; box-shadow: 0 4px 0 #424242; cursor: pointer;}
 
-        #split-modal { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#333; padding:15px; border-radius:8px; z-index:50; border: 2px solid #4caf50; flex-direction: column; gap: 10px; width: 80%; text-align: center;}
+        #split-modal { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background: linear-gradient(to bottom, #37474f, #263238); padding:20px; border-radius:12px; z-index:50; border: 2px solid #66bb6a; flex-direction: column; gap: 15px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
     </style>
 </head>
 <body>
 
 <div id="app-container">
     <div id="sys-toolbar">
-        <button class="sys-btn" onclick="undo()">↩️ 撤销 (Undo)</button>
-        <button class="sys-btn" onclick="resetGame()" style="color:#ff5252; border-color:#ff5252;">🔄 重新开局</button>
+        <button class="sys-btn" onclick="undo()">↩️ 撤回上一步</button>
+        <button class="sys-btn" onclick="resetGame()" style="color:#ff8a80; border-color:rgba(255,138,128,0.4);">🔄 重置牌局</button>
     </div>
 
     <div id="player-hub">
@@ -127,19 +146,19 @@
     </div>
 
     <div id="phase-bar">
-        <span id="phase-text">⚖️ 准备录入阶段</span>
-        <span id="pool-stat">总出牌: 0 张</span>
+        <span id="phase-text">⚖️ 洗牌录入中...</span>
+        <span id="pool-stat">桌面已出: 0 张</span>
     </div>
 
     <div id="table-area"><div id="table-content"></div></div>
 
     <div id="ai-panel">
-        <div style="color:#666; font-size:0.8rem; text-align:center; padding-top:10px;">等待满 20 张启动战术引擎...</div>
+        <div style="color:#aaa; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;">🚀 正在准备卡牌... 满 20 张将自动启动战神引擎</div>
     </div>
 
     <div id="player-area">
         <div id="hand-header">
-            <span class="header-title" id="hand-title">我的手牌</span>
+            <span class="header-title" id="hand-title">我的手牌区</span>
             <div class="header-right">
                 <span class="penalty-txt" id="penalty-score">罚分: 0</span>
                 <span id="hand-count-txt">0 / 20</span>
@@ -147,11 +166,11 @@
         </div>
         
         <div id="setup-progress-bar"><div id="setup-progress-fill"></div></div>
-        <button id="start-game-btn" onclick="startGame()">✅ 满20张，正式开局</button>
+        <button id="start-game-btn" onclick="startGame()" style="display:none; width: 100%; padding: 12px; background: linear-gradient(to bottom, #ffd54f, #ffb300); color: #000; font-weight: 900; font-size: 1.1rem; border: none; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 4px 0 #ff8f00, 0 5px 15px rgba(0,0,0,0.4); cursor:pointer;">✅ 录入完毕，正式开局</button>
 
         <div id="action-bar">
-            <button class="act-btn btn-play" onclick="playSelectedAsNewGroup()">⬆️ 打出新组</button>
-            <button class="act-btn btn-delete" onclick="deleteSelectedCards()">❌ 丢弃</button>
+            <button class="act-btn btn-play" onclick="playSelectedAsNewGroup()">⬆️ 作为新牌组打出</button>
+            <button class="act-btn btn-delete" onclick="deleteSelectedCards()">❌ 丢弃(纠错)</button>
         </div>
 
         <div id="opp-buffer-zone">
@@ -190,17 +209,18 @@
 
     <div id="quick-input-modal">
         <div class="qi-box">
-            <h3 class="qi-title" id="qi-title-txt">预测对手出牌</h3>
+            <h3 class="qi-title" id="qi-title-txt">对手出牌预测</h3>
             <div id="qi-options"></div>
-            <button class="qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动编辑</button>
+            <button class="qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动输入</button>
         </div>
     </div>
 
     <div id="split-modal">
-        <h4 style="color:white; margin-bottom:10px;">在此处断开拆牌？</h4>
+        <h4 style="color:white; margin-bottom:5px; font-weight:900;">✂️ 在此处切断牌组？</h4>
+        <p style="color:#aaa; font-size:0.8rem; margin-bottom:15px;">拆开后，你可以用手牌去连接断开的部分。</p>
         <div style="display:flex; gap:10px;">
-            <button class="sys-btn" style="flex:1; background:#4caf50; color:white;" onclick="confirmSplit()">✂️ 确认拆解</button>
-            <button class="sys-btn" style="flex:1;" onclick="document.getElementById('split-modal').style.display='none'">取消</button>
+            <button class="sys-btn" style="flex:1; background:linear-gradient(to bottom, #66bb6a, #43a047); color:white; border:none; padding:10px; font-weight:900; border-radius:6px;" onclick="confirmSplit()">确认拆解</button>
+            <button class="sys-btn" style="flex:1; padding:10px; font-weight:bold; border-radius:6px;" onclick="document.getElementById('split-modal').style.display='none'">取消</button>
         </div>
     </div>
 </div>
@@ -224,17 +244,20 @@
     const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5, 'none':99 };
 
     function getVal(r) { return rankVal[r]; }
-    function getRankByVal(val) { return Object.keys(rankVal).find(k => rankVal[k] === val); }
-    function numToRStr(val) { return {1:'A', 11:'J', 12:'Q', 13:'K'}[val] || val.toString(); }
+    function getRankByVal(val) { 
+        if (val === 14) return 'A'; // A 循环逻辑
+        return Object.keys(rankVal).find(k => rankVal[k] === val); 
+    }
+    function numToRStr(val) { return {1:'A', 11:'J', 12:'Q', 13:'K', 14:'A'}[val] || val.toString(); }
 
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV18', JSON.stringify(state));
+        localStorage.setItem('magicLamiV20', JSON.stringify(state));
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV18');
+        const saved = localStorage.getItem('magicLamiV20');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -247,14 +270,15 @@
             historyStack.pop(); 
             state = JSON.parse(historyStack[historyStack.length - 1]);
             selectedIndices.clear();
-            applyUIState(); render(); calculateAI();
-            localStorage.setItem('magicLamiV18', JSON.stringify(state));
+            applyUIState(); render(); 
+            if (state.isGameStarted) calculateAI(); else document.getElementById('ai-panel').innerHTML = "<div style='color:#888; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;'>🚀 正在准备卡牌... 满 20 张将自动启动战神引擎</div>";
+            localStorage.setItem('magicLamiV20', JSON.stringify(state));
         }
     }
 
     function resetGame() {
         if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV18');
+            localStorage.removeItem('magicLamiV20');
             location.reload();
         }
     }
@@ -265,7 +289,7 @@
     }
 
     function getWildCount(suit, rank) {
-        if (!rank) return 0;
+        if (!rank || rank === 'Spacer') return 0;
         let total = 2; 
         let inHand = state.myHand.filter(c => c.suit === suit && c.rank === rank).length;
         let onTable = 0;
@@ -285,8 +309,12 @@
         if (rs.length === 0) return null;
         let isZhan = rs.every(c => c.rank === rs[0].rank);
         if (isZhan) return { type: 'set', rank: rs[0].rank, suits: rs.map(c=>c.suit) };
+        
         let firstRealIdx = cards.findIndex(c => c.rank !== 'Joker');
-        let firstLogicVal = getVal(cards[firstRealIdx].rank) - firstRealIdx;
+        let firstVal = getVal(cards[firstRealIdx].rank);
+        if (firstVal === 1 && cards.some(c=>c.rank==='K' || c.rank==='Q')) firstVal = 14;
+        
+        let firstLogicVal = firstVal - firstRealIdx;
         let lastLogicVal = firstLogicVal + cards.length - 1;
         return { type: 'run', suit: rs[0].suit, first: firstLogicVal, last: lastLogicVal };
     }
@@ -295,9 +323,13 @@
         let rs = groupCards.filter(c=>c.rank!=='Joker');
         if(rs.length===0) return "🤡";
         if(rs.every(c=>c.rank===rs[0].rank)) return rs[0].rank; 
+        
         let firstRealIdx = groupCards.findIndex(c=>c.rank!=='Joker');
-        let val = (getVal(groupCards[firstRealIdx].rank) - firstRealIdx) + jIdx;
-        return getRankByVal(val) || val;
+        let firstVal = getVal(groupCards[firstRealIdx].rank);
+        if (firstVal === 1 && groupCards.some(c=>c.rank==='K' || c.rank==='Q')) firstVal = 14;
+        
+        let val = (firstVal - firstRealIdx) + jIdx;
+        return numToRStr(val);
     }
 
     function smartSort(cards) {
@@ -307,10 +339,19 @@
         if(rs.length === 0) return js;
         if(rs.every(c => c.rank === rs[0].rank)) return [...rs.sort((a,b)=>suitOrder[a.suit]-suitOrder[b.suit]), ...js];
         if(rs.every(c => c.suit === rs[0].suit)) {
-            rs.sort((a,b) => getVal(a.rank) - getVal(b.rank));
-            let res = [], expect = getVal(rs[0].rank);
+            rs.sort((a,b) => {
+                let va = getVal(a.rank), vb = getVal(b.rank);
+                if (va === 1 && vb > 10) return 1;
+                if (vb === 1 && va > 10) return -1;
+                return va - vb;
+            });
+            let res = [];
+            let expect = getVal(rs[0].rank);
+            if (expect === 1 && rs.some(c=>getVal(c.rank)>10)) expect = 14;
+            
             rs.forEach(c => {
                 let curVal = getVal(c.rank);
+                if (curVal === 1 && expect > 10) curVal = 14;
                 if (curVal === expect - 1) res.push(c); 
                 else { while (curVal > expect && js.length > 0) { res.push(js.pop()); expect++; } res.push(c); expect = curVal + 1; }
             });
@@ -324,13 +365,28 @@
         let groupCounter = 1;
         let reals = state.myHand.filter(c => c.rank !== 'Joker' && c.rank !== 'Spacer');
         ['♠️','♥️','♣️','♦️'].forEach(s => {
-            let sCards = reals.filter(c => c.suit === s).sort((a,b)=>getVal(a.rank)-getVal(b.rank));
+            let sCards = reals.filter(c => c.suit === s);
+            sCards.sort((a,b) => {
+                let va = getVal(a.rank), vb = getVal(b.rank);
+                if (va === 1 && vb > 10) return 1;
+                if (vb === 1 && va > 10) return -1;
+                return va - vb;
+            });
+            
             let i = 0;
             while(i < sCards.length - 2) {
-                if (getVal(sCards[i+1].rank) === getVal(sCards[i].rank)+1 && getVal(sCards[i+2].rank) === getVal(sCards[i].rank)+2) {
+                let val1 = getVal(sCards[i].rank); if (val1===1 && sCards.some(c=>getVal(c.rank)>10)) val1=14;
+                let val2 = getVal(sCards[i+1].rank); if (val2===1 && val1>10) val2=14;
+                let val3 = getVal(sCards[i+2].rank); if (val3===1 && val2>10) val3=14;
+                
+                if (val2 === val1+1 && val3 === val1+2) {
                     sCards[i].groupId = groupCounter; sCards[i+1].groupId = groupCounter; sCards[i+2].groupId = groupCounter;
-                    let j = i + 3; let lastVal = getVal(sCards[i+2].rank);
-                    while(j < sCards.length && getVal(sCards[j].rank) === lastVal + 1) { sCards[j].groupId = groupCounter; lastVal++; sCards.splice(j, 1); }
+                    let j = i + 3; let lastVal = val3;
+                    while(j < sCards.length) {
+                        let cVal = getVal(sCards[j].rank); if (cVal===1 && lastVal>10) cVal=14;
+                        if (cVal === lastVal + 1) { sCards[j].groupId = groupCounter; lastVal++; sCards.splice(j, 1); }
+                        else break;
+                    }
                     groupCounter++; sCards.splice(i, 3);
                 } else { i++; }
             }
@@ -346,7 +402,11 @@
             if (a.groupId && !b.groupId) return -1;
             if (!a.groupId && b.groupId) return 1;
             if (a.groupId && b.groupId && a.groupId !== b.groupId) return a.groupId - b.groupId;
-            return suitOrder[a.suit] - suitOrder[b.suit] || getVal(a.rank) - getVal(b.rank);
+            
+            let va = getVal(a.rank), vb = getVal(b.rank);
+            if (va === 1 && vb > 10) va = 14;
+            if (vb === 1 && va > 10) vb = 14;
+            return suitOrder[a.suit] - suitOrder[b.suit] || va - vb;
         });
     }
 
@@ -364,11 +424,19 @@
         if(save) saveState();
     }
 
+    // 录入动作
     function inputRank(r) {
         const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : r === 'Spacer' ? {suit:'none', rank:'Spacer', color:'black'} : {suit:state.curS, rank:r, color:state.curC};
         if (state.activeP === 0) {
-            if (!state.isGameStarted && state.myHand.length < 20) state.myHand.push(card);
-            else if (state.isGameStarted && r === 'Spacer') state.myHand.push(card); 
+            if (!state.isGameStarted) {
+                if (state.myHand.length < 20) state.myHand.push(card);
+                if (state.myHand.filter(c=>c.rank!=='Spacer').length === 20) {
+                    state.isGameStarted = true; 
+                    calculateAI();
+                }
+            } else {
+                if (r === 'Spacer') state.myHand.push(card); 
+            }
         } else {
             if (state.isGameStarted) {
                 if (state.oppBuffer.length === 0 && r !== 'Joker' && r !== 'Spacer') { showQuickInputModal(r); return; } 
@@ -381,8 +449,8 @@
     function showQuickInputModal(r) {
         tempPendingCard = {suit:state.curS, rank:r, color:state.curC};
         let rVal = getVal(r);
-        let colorStyle = state.curC === 'red' ? '#ff5252' : '#4caf50';
-        document.getElementById('qi-title-txt').innerHTML = `预测 P${state.activeP+1} 出牌<br><span style="color:${colorStyle}; font-size:1.4rem; display:inline-block; margin-top:5px;">${state.curS} ${r}</span>`;
+        let colorStyle = state.curC === 'red' ? '#ff5252' : '#66bb6a';
+        document.getElementById('qi-title-txt').innerHTML = `预测 P${state.activeP+1} 打出<br><span style="color:${colorStyle}; font-size:1.6rem; display:inline-block; margin-top:8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${state.curS} ${r}</span>`;
         
         let isOppIceBreaking = state.oppCounts[state.activeP] === 20;
         let html = '';
@@ -394,16 +462,16 @@
         html += '</div>';
 
         if (rVal <= 12) {
-            html += `<div class="qi-grid full"><button class="qi-btn btn-joker" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌 (顺)<small>${state.curS}[${r}, ${r2}, 🤡]</small></button></div>`;
+            html += `<div class="qi-grid full"><button class="qi-btn btn-joker" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌顺子<small>${state.curS}[${r}, ${r2}, 🤡]</small></button></div>`;
         }
         
         if (!isOppIceBreaking) {
             html += '<div class="qi-grid" style="margin-top: 10px;">';
-            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">斩牌 3 张<small>[${r}, ${r}, ${r}]</small></button>`;
-            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">斩牌 4 张<small>[${r}, ${r}, ${r}, ${r}]</small></button>`;
+            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">群组 3 张<small>[${r}, ${r}, ${r}]</small></button>`;
+            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">群组 4 张<small>[${r}, ${r}, ${r}, ${r}]</small></button>`;
             html += '</div>';
         } else {
-            html += '<div style="margin-top:12px; margin-bottom: 5px; font-size:0.75rem; color:#888; text-align:center;">🔒 该玩家尚未破冰，必须出顺子</div>';
+            html += '<div style="margin-top:15px; margin-bottom: 5px; font-size:0.8rem; color:#bbb; text-align:center; background:rgba(0,0,0,0.3); padding:5px; border-radius:4px;">🔒 尚未破冰，规则限定只能出同花顺</div>';
         }
         
         document.getElementById('qi-options').innerHTML = html;
@@ -439,24 +507,19 @@
         
         let fillEl = document.getElementById('setup-progress-fill');
         if(fillEl) fillEl.style.width = `${(count/20)*100}%`;
-        
-        let startBtn = document.getElementById('start-game-btn');
-        let pBar = document.getElementById('setup-progress-bar');
-        if(startBtn && pBar) {
-            startBtn.style.display = (count >= 20) ? 'block' : 'none';
-            pBar.style.display = (count >= 20) ? 'none' : 'block';
-        }
     }
 
     function startGame() {
         state.isGameStarted = true;
-        document.getElementById('start-game-btn').style.display = 'none';
         selectedIndices.clear(); render(); calculateAI(); saveState();
     }
 
     function handleHandCardClick(index) {
-        if (!state.isGameStarted) state.myHand.splice(index, 1);
-        else { if (selectedIndices.has(index)) selectedIndices.delete(index); else selectedIndices.add(index); }
+        if (!state.isGameStarted) {
+            state.myHand.splice(index, 1);
+        } else { 
+            if (selectedIndices.has(index)) selectedIndices.delete(index); else selectedIndices.add(index); 
+        }
         render(); saveState();
     }
 
@@ -484,7 +547,7 @@
                 if(bounds.type === 'set' && tempGroup.length <= 4) {
                     let suits = tempGroup.filter(c=>c.rank!=='Joker').map(c=>c.suit);
                     if(new Set(suits).size === suits.length) isValid = true; 
-                } else if (bounds.type === 'run' && bounds.first >= 1 && bounds.last <= 13) {
+                } else if (bounds.type === 'run' && bounds.first >= 1 && bounds.last <= 14) {
                     let checkRun = smartSort(tempGroup);
                     let realCount = checkRun.filter(c=>c.rank!=='Joker').length;
                     if(realCount > 0 && bounds.last - bounds.first + 1 === tempGroup.length) isValid = true;
@@ -495,14 +558,14 @@
                 g.cards = smartSort(tempGroup);
                 state.oppCounts[0] -= cardsToAppend.length;
                 selectedIndices.clear(); render(); calculateAI(); saveState();
-            } else { alert("非法接牌！"); }
+            } else { alert("⛔ 规则限制：非法接牌。"); }
         } 
         else {
             if(g.cards.length >= 6 && cardIndex > 2 && cardIndex < g.cards.length - 2) {
                 splitPending = { gIdx: groupIndex, cIdx: cardIndex };
                 document.getElementById('split-modal').style.display = 'flex';
             } else {
-                if(confirm(`要撤回 P${g.owner+1} 的牌组吗？`)) {
+                if(confirm(`撤回 P${g.owner+1} 的牌组回到手牌或暂存区？`)) {
                     if (g.owner === 0) { state.myHand.push(...g.cards); state.oppCounts[0] += g.cards.length; state.tableGroups.splice(groupIndex, 1); switchPlayer(0); } 
                     else { state.oppBuffer = [...g.cards]; state.tableGroups.splice(groupIndex, 1); switchPlayer(g.owner); }
                     render(); calculateAI(); saveState();
@@ -523,7 +586,7 @@
     }
 
     function deleteSelectedCards() {
-        if(confirm("直接删除手牌吗？")) {
+        if(confirm("确定要丢弃这些错误录入的手牌吗？")) {
             Array.from(selectedIndices).sort((a,b)=>b-a).forEach(idx => state.myHand.splice(idx, 1));
             selectedIndices.clear(); render(); calculateAI(); saveState();
         }
@@ -537,7 +600,7 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // --- 🏆 V18: 战术图谱决策大脑 (Tactical Decision Tree) ---
+    // --- AI 引擎 ---
     function findInHand(suit, valStr) {
         if (valStr === 'Joker') return state.myHand.find(c => c.rank === 'Joker');
         return state.myHand.find(c => c.suit === suit && c.rank === valStr && c.rank !== 'Spacer');
@@ -548,7 +611,7 @@
         panel.innerHTML = "";
         if (!state.isGameStarted) return;
 
-        let hintsMap = new Map(); // 绝对去重池
+        let hintsMap = new Map(); 
         const addHint = (hint) => {
             let key = hint.type + '-' + (hint.gIdx !== undefined ? hint.gIdx : '') + '-' + hint.cards.map(c=>c.suit+c.rank).join(',');
             if (!hintsMap.has(key)) hintsMap.set(key, hint);
@@ -559,32 +622,39 @@
         const suits = ['♠️','♥️','♣️','♦️'];
 
         if (!state.isBroken) {
-            document.getElementById('phase-text').innerText = "🧊 寻找破冰 (仅顺子)";
+            document.getElementById('phase-text').innerText = "🧊 破冰准备阶段 (须打出同花顺)";
             suits.forEach(suit => {
-                let nums = [...new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
+                let numsSet = new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)));
+                if (numsSet.has(1)) numsSet.add(14); 
+                let nums = [...numsSet].sort((a,b)=>a-b);
+                
                 for(let i=0; i<nums.length; i++) {
                     let v = nums[i];
-                    let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                    if (v > 12) continue; 
+                    
+                    let r1 = v === 14 ? 'A' : getRankByVal(v);
+                    let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
+                    let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
+
                     if (nums.includes(v+1) && nums.includes(v+2)) {
                         let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2), c3 = findInHand(suit, r3);
-                        if(c1&&c2&&c3) addHint({ type: 'ice', cards: [c1, c2, c3], suit: suit, txt: `${suit}[${numToRStr(v)},${numToRStr(v+1)},${numToRStr(v+2)}]` });
+                        if(c1&&c2&&c3) addHint({ type: 'ice', cards: [c1, c2, c3], suit: suit, txt: `${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},${numToRStr((v+2)===14?1:(v+2))}]` });
                     }
                     if (jokers.length > 0) {
                         if (nums.includes(v+1) && !nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2);
-                            if(c1&&c2) addHint({ type: 'ice', cards: [c1, c2, jokers[0]], suit: suit, txt: `${suit}[${numToRStr(v)},${numToRStr(v+1)},🤡]` });
+                            if(c1&&c2) addHint({ type: 'ice', cards: [c1, c2, jokers[0]], suit: suit, txt: `${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},🤡]` });
                         }
                         if (!nums.includes(v+1) && nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c3 = findInHand(suit, r3);
-                            if(c1&&c3) addHint({ type: 'ice', cards: [c1, jokers[0], c3], suit: suit, txt: `${suit}[${numToRStr(v)},🤡,${numToRStr(v+2)}]` });
+                            if(c1&&c3) addHint({ type: 'ice', cards: [c1, jokers[0], c3], suit: suit, txt: `${suit}[${numToRStr(v===14?1:v)},🤡,${numToRStr((v+2)===14?1:(v+2))}]` });
                         }
                     }
                 }
             });
         } else {
-            document.getElementById('phase-text').innerText = "🔥 自由博弈中";
+            document.getElementById('phase-text').innerText = "🔥 自由博弈中 (目的：清空手牌)";
             
-            // 1. 接牌探索 (支持多张连拆)
             state.tableGroups.forEach((g, gIdx) => {
                 let bounds = getGroupBounds(g.cards);
                 if (!bounds) return;
@@ -593,48 +663,50 @@
                     let missingSuits = ['♠️','♥️','♣️','♦️'].filter(s => !bounds.suits.includes(s));
                     missingSuits.forEach(ms => {
                         let match = findInHand(ms, bounds.rank);
-                        if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `贴入第 ${gIdx+1} 组 (斩)` });
+                        if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (群组)` });
                     });
                 } else if (bounds.type === 'run') {
-                    // 向上接
-                    let upCards = []; let curLast = bounds.last;
-                    while(true) {
-                        let rNext = getRankByVal(curLast + 1);
-                        if(!rNext) break;
-                        let match = findInHand(bounds.suit, rNext);
-                        if (match) { upCards.push(match); curLast++; addHint({ type: 'append', cards: [...upCards], group: g, gIdx: gIdx, txt: `向上接第 ${gIdx+1} 组 (顺)` }); } 
-                        else { break; }
+                    if (bounds.last < 14) {
+                        let rNext = getRankByVal(bounds.last + 1);
+                        if(rNext) {
+                            let match = findInHand(bounds.suit, rNext);
+                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (同花顺)` }); 
+                        }
                     }
-                    // 向下接
-                    let downCards = []; let curFirst = bounds.first;
-                    while(true) {
-                        let rPrev = getRankByVal(curFirst - 1);
-                        if(!rPrev) break;
-                        let match = findInHand(bounds.suit, rPrev);
-                        if (match) { downCards.push(match); curFirst--; addHint({ type: 'append', cards: [...downCards], group: g, gIdx: gIdx, txt: `向下接第 ${gIdx+1} 组 (顺)` }); } 
-                        else { break; }
+                    if (bounds.first > 1) {
+                        let rPrev = getRankByVal(bounds.first - 1);
+                        if(rPrev) {
+                            let match = findInHand(bounds.suit, rPrev);
+                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (同花顺)` }); 
+                        }
                     }
                 }
             });
 
-            // 2. 新组探索
             suits.forEach(suit => {
-                let nums = [...new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
+                let numsSet = new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)));
+                if (numsSet.has(1)) numsSet.add(14);
+                let nums = [...numsSet].sort((a,b)=>a-b);
+                
                 for(let i=0; i<nums.length; i++) {
                     let v = nums[i];
-                    let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                    if (v > 12) continue;
+                    let r1 = v === 14 ? 'A' : getRankByVal(v);
+                    let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
+                    let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
+                    
                     if (nums.includes(v+1) && nums.includes(v+2)) {
                         let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2), c3 = findInHand(suit, r3);
-                        if(c1&&c2&&c3) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, c3], suit: suit, txt: `新组: ${suit}[${numToRStr(v)}..${numToRStr(v+2)}]` });
+                        if(c1&&c2&&c3) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, c3], suit: suit, txt: `打出: ${suit}[${numToRStr(v===14?1:v)}..${numToRStr((v+2)===14?1:(v+2))}]` });
                     }
                     if (jokers.length > 0) {
                         if (nums.includes(v+1) && !nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2);
-                            if(c1&&c2) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, jokers[0]], suit: suit, txt: `新组(鬼): ${suit}[${numToRStr(v)},${numToRStr(v+1)},🤡]` });
+                            if(c1&&c2) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, jokers[0]], suit: suit, txt: `打出(含鬼): ${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},🤡]` });
                         }
                         if (!nums.includes(v+1) && nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c3 = findInHand(suit, r3);
-                            if(c1&&c3) addHint({ type: 'new', meldType: 'run', cards: [c1, jokers[0], c3], suit: suit, txt: `新组(鬼): ${suit}[${numToRStr(v)},🤡,${numToRStr(v+2)}]` });
+                            if(c1&&c3) addHint({ type: 'new', meldType: 'run', cards: [c1, jokers[0], c3], suit: suit, txt: `打出(含鬼): ${suit}[${numToRStr(v===14?1:v)},🤡,${numToRStr((v+2)===14?1:(v+2))}]` });
                         }
                     }
                 }
@@ -644,39 +716,38 @@
                 let sameRanks = handReals.filter(c => c.rank === r);
                 let uniqueSuits = new Set(), validZhan = [];
                 sameRanks.forEach(c => { if(!uniqueSuits.has(c.suit)) { uniqueSuits.add(c.suit); validZhan.push(c); }});
-                if (validZhan.length >= 3) addHint({ type: 'new', meldType: 'set', cards: validZhan.slice(0,3), txt: `新组: [${r},${r},${r}]` });
-                if (validZhan.length === 2 && jokers.length > 0) addHint({ type: 'new', meldType: 'set', cards: [validZhan[0], validZhan[1], jokers[0]], txt: `新组(鬼): [${r},${r},🤡]` });
+                if (validZhan.length >= 3) addHint({ type: 'new', meldType: 'set', cards: validZhan.slice(0,3), txt: `打出: 群组 [${r},${r},${r}]` });
+                if (validZhan.length === 2 && jokers.length > 0) addHint({ type: 'new', meldType: 'set', cards: [validZhan[0], validZhan[1], jokers[0]], txt: `打出(含鬼): 群组 [${r},${r},🤡]` });
             });
         }
 
-        // 🏆 战术打分引擎 (The Brain)
         let hintsArray = Array.from(hintsMap.values());
         hintsArray.forEach(hint => {
             let score = 0;
             let pointsCleared = hint.cards.reduce((sum, c) => sum + getPenalty(c), 0);
-            score += pointsCleared * 10; // 核心：高分优先
+            score += pointsCleared * 10; 
 
             let jokerCount = hint.cards.filter(c => c.rank === 'Joker').length;
-            score -= jokerCount * 500; // 核心：严惩乱用鬼牌
+            score -= jokerCount * 500; 
 
             if (hint.type === 'ice') {
                 hint.tactical = jokerCount > 0 ? '🟡 替补破冰' : '🟢 完美破冰';
                 hint.css = jokerCount > 0 ? 'safe' : 'safe';
             } 
             else if (hint.type === 'append') {
-                score += 150; // 接牌永远优于开新战场
+                score += 150; 
                 let wildCount = hint.cards.reduce((sum, c) => sum + getWildCount(c.suit, c.rank), 0);
                 if (wildCount > 0) {
-                    score += 200; hint.tactical = '🔥 抢位拦截'; hint.css = 'urgent';
+                    score += 200; hint.tactical = '🔥 截胡抢接'; hint.css = 'urgent';
                 } else {
-                    hint.tactical = '🔒 安全脱手'; hint.css = 'safe';
+                    hint.tactical = '🔒 安全接龙'; hint.css = 'safe';
                 }
             } 
             else if (hint.type === 'new') {
                 let safeEndpoints = 0;
                 if (hint.meldType === 'run') {
-                    let firstVal = Math.min(...hint.cards.filter(c=>c.rank!=='Joker').map(c=>getVal(c.rank)));
-                    let lastVal = Math.max(...hint.cards.filter(c=>c.rank!=='Joker').map(c=>getVal(c.rank)));
+                    let firstVal = Math.min(...hint.cards.filter(c=>c.rank!=='Joker').map(c=>getVal(c.rank)===1&&c.rank==='A'?14:getVal(c.rank)));
+                    let lastVal = Math.max(...hint.cards.filter(c=>c.rank!=='Joker').map(c=>getVal(c.rank)===1&&c.rank==='A'?14:getVal(c.rank)));
                     if (getWildCount(hint.suit, getRankByVal(firstVal-1)) === 0) safeEndpoints++;
                     if (getWildCount(hint.suit, getRankByVal(lastVal+1)) === 0) safeEndpoints++;
                 } else {
@@ -688,14 +759,13 @@
                 if (safeEndpoints >= 1) {
                     score += 50; hint.tactical = '🟢 绝张护体'; hint.css = 'safe';
                 } else {
-                    score -= 50; hint.tactical = '🔴 危险投喂'; hint.css = 'danger';
+                    score -= 50; hint.tactical = '🔴 危险送牌'; hint.css = 'danger';
                 }
             }
             hint.score = score;
             hint.pointsCleared = pointsCleared;
         });
 
-        // 排序并渲染
         hintsArray.sort((a, b) => b.score - a.score);
 
         hintsArray.forEach(hint => {
@@ -709,9 +779,9 @@
                         <span class="tactical-tag">${hint.tactical}</span>
                         <span class="hint-desc">${hint.txt}</span>
                     </div>
-                    <div class="hint-points">打出 [${displayCards}] -> 削减 ${hint.pointsCleared} 分</div>
+                    <div class="hint-points">打出 [${displayCards}] -> 减少 ${hint.pointsCleared} 罚分</div>
                 </div>
-                <button class="hint-btn">一键执行</button>
+                <button class="hint-btn">出牌</button>
             `;
             
             div.querySelector('button').onclick = () => {
@@ -733,14 +803,24 @@
             panel.appendChild(div);
         });
 
-        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem; text-align:center; padding:15px;'>暂无推荐战术，坚守死牌</div>";
+        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#bbb; font-size:0.85rem; text-align:center; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px;'>⚠️ 暂无最优出牌方案，建议静观其变保分。</div>";
     }
 
     function render() {
         document.getElementById('action-bar').style.display = (selectedIndices.size > 0 && state.isGameStarted && state.activeP === 0) ? 'flex' : 'none';
         
-        if (state.isGameStarted) groupHand();
-        else updateProgress();
+        let count = state.myHand.filter(c=>c.rank!=='Spacer').length;
+        state.oppCounts[0] = count;
+        
+        let txtEl = document.getElementById('hand-count-txt');
+        if(txtEl) txtEl.innerText = state.isGameStarted ? `剩余 ${count} 张` : `${count} / 20`;
+        
+        if (state.isGameStarted) {
+            groupHand();
+            document.getElementById('phase-text').innerText = state.isBroken ? "🔥 轮到你！尽可能清空手牌" : "🧊 第一手：必须打出同花顺";
+        } else {
+            document.getElementById('phase-text').innerText = `⚖️ 发牌中... (${count}/20)`;
+        }
 
         for(let i=0; i<4; i++) {
             let tab = document.getElementById(`tab-${i}`);
@@ -757,16 +837,11 @@
             const deadClass = (state.isGameStarted && c.rank!=='Joker' && c.rank!=='Spacer' && getWildCount(c.suit, c.rank) === 0 && countInWorld(c.suit, c.rank) >= 2) ? 'dead-card' : '';
             penaltySum += getPenalty(c);
             return `<div class="card ${c.color} ${groupClass} ${spacerClass} ${deadClass} ${isSel ? 'selected' : ''}" onclick="handleHandCardClick(${i}); event.stopPropagation();">
-                ${c.rank==='Spacer' ? '||' : `<div>${c.suit}</div><div>${c.rank}</div>`}
+                ${c.rank==='Spacer' ? '' : `<div>${c.suit}</div><div>${c.rank}</div>`}
             </div>`;
         }).join('');
         
-        document.getElementById('penalty-score').innerText = `罚分: ${penaltySum}`;
-        if (state.isGameStarted) {
-            let txtEl = document.getElementById('hand-count-txt');
-            if(txtEl) txtEl.innerText = `${state.myHand.filter(c=>c.rank!=='Spacer').length} 张剩余`;
-        }
-
+        document.getElementById('penalty-score').innerText = `目前罚分: ${penaltySum}`;
         document.getElementById('buffer-cards').innerHTML = state.oppBuffer.map((c, i) => `<div class="card ${c.color}" onclick="removeBufferCard(${i})"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
 
         let validTargetGroups = new Set();
@@ -780,7 +855,7 @@
                     if(bounds.type === 'set' && tempGroup.length <= 4) {
                         let suits = tempGroup.filter(c=>c.rank!=='Joker').map(c=>c.suit);
                         if(new Set(suits).size === suits.length) validTargetGroups.add(i);
-                    } else if (bounds.type === 'run' && bounds.first >= 1 && bounds.last <= 13) {
+                    } else if (bounds.type === 'run' && bounds.first >= 1 && bounds.last <= 14) {
                         let checkRun = smartSort(tempGroup);
                         let realCount = checkRun.filter(c=>c.rank!=='Joker').length;
                         if(realCount > 0 && bounds.last - bounds.first + 1 === tempGroup.length) validTargetGroups.add(i);
@@ -802,6 +877,14 @@
                     </div>`).join('')}
             </div>`;
         }).join('');
+        document.getElementById('pool-stat').innerText = `桌面已出: ${totalOut} 张`;
+    }
+
+    function countInWorld(suit, rank) {
+        let count = 0;
+        state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
+        state.discardPool.forEach(c => { if(c.suit === suit && c.rank === rank) count++; });
+        return count;
     }
 
     window.onload = () => loadState();
