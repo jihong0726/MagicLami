@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V20 - 拟真重制版</title>
+    <title>MagicLami V21 - 强规则实战版</title>
     <style>
-        /* 全局主题变量：拟真配色 */
         :root { 
             --p1-color: #4caf50; --opp-color: #ff9800; 
-            --bg-felt: radial-gradient(circle at center, #1b4d3e 0%, #0a2118 100%); /* 赌场绿呢绒 */
-            --bg-wood: linear-gradient(to bottom, #5d4037, #3e2723); /* 原木牌架 */
+            --bg-felt: radial-gradient(circle at center, #1b4d3e 0%, #0a2118 100%); 
+            --bg-wood: linear-gradient(to bottom, #5d4037, #3e2723); 
             --wood-edge: #795548;
         }
         
@@ -17,30 +16,27 @@
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; color: white; }
         #app-container { width: 100%; max-width: 480px; background: var(--bg-felt); display: flex; flex-direction: column; height: 100%; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
 
-        /* 顶部工具栏 (深色半透明) */
+        /* 顶部工具栏 */
         #sys-toolbar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.6); padding: 8px 12px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(4px); z-index: 20;}
         .sys-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ddd; padding: 5px 12px; border-radius: 6px; font-weight: bold; transition: all 0.1s; }
         .sys-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
+        .btn-next-turn { background: linear-gradient(to bottom, #42a5f5, #1e88e5); border-color: #1565c0; color: white; box-shadow: 0 2px 0 #0d47a1; }
+        .btn-next-turn:active { transform: translateY(2px); box-shadow: none; }
 
-        /* 玩家席位 Tab (立体卡片感) */
+        /* 玩家席位 Tab (指示当前操作对象) */
         #player-hub { display: flex; background: rgba(0,0,0,0.4); padding: 6px; gap: 6px; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3);}
         .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 8px; font-size: 0.8rem; font-weight: bold; color: #aaa; background: rgba(255,255,255,0.05); position: relative; transition: all 0.2s; border: 1px solid transparent;}
         .p-tab.active { color: #fff; background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 3px 0 #2e7d32, 0 4px 8px rgba(0,0,0,0.4); border: 1px solid #81c784; transform: translateY(-2px); text-shadow: 0 1px 2px rgba(0,0,0,0.3);}
         .p-tab.active.opp { background: linear-gradient(to bottom, #ffa726, #f57c00); box-shadow: 0 3px 0 #e65100, 0 4px 8px rgba(0,0,0,0.4); border: 1px solid #ffcc80; }
         .p-count { font-size: 0.65rem; display: block; opacity: 0.8; margin-top: 2px;}
-        .p-tab.danger { animation: flashRed 1s infinite alternate; } 
-        @keyframes flashRed { from { background: rgba(255,255,255,0.05); } to { background: #d32f2f; color: white; border-color:#ff5252; box-shadow: 0 0 10px #ff5252;} }
 
-        /* 状态条 */
-        #phase-bar { padding: 6px 12px; font-size: 0.75rem; background: rgba(0,0,0,0.5); color: #ffe082; display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid rgba(0,0,0,0.5); }
-
-        /* 桌面区 (毛毡) */
+        /* 桌面区 */
         #table-area { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .meld-group { background: rgba(0,0,0,0.25); padding: 10px; border-radius: 10px; display: flex; flex-wrap: wrap; border: 2px solid rgba(255,255,255,0.05); position: relative; gap: 4px; cursor: pointer; transition: all 0.2s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);}
         .meld-group.highlight-target { border-color: #66bb6a; background: rgba(76, 175, 80, 0.2); box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.3), 0 0 10px rgba(76, 175, 80, 0.5); transform: scale(1.02); z-index: 5;}
-        .owner-tag { position: absolute; right: 6px; top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.2); font-weight: 900; letter-spacing: 1px;}
+        .owner-tag { position: absolute; right: 6px; top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.2); font-weight: 900;}
 
-        /* 🃏 拟真卡牌样式 */
+        /* 卡牌样式 */
         .card { background: linear-gradient(to bottom, #ffffff, #f5f5f5); border-radius: 6px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 52px; font-weight: 900; font-size: 1.1rem; box-shadow: 1px 3px 5px rgba(0,0,0,0.5), inset 0 0 2px rgba(255,255,255,0.8); border: none; color: #111; position: relative; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
         .card.red { color: #d32f2f; }
         .card.joker { color: #fbc02d; font-size: 0.75rem; background: linear-gradient(to bottom, #fffde7, #fff9c4); border: 1px solid #fbc02d;}
@@ -48,13 +44,11 @@
         .card.spacer { background: transparent; border: 1px dashed rgba(255,255,255,0.3); box-shadow: none; width: 15px; color: transparent; }
         
         #hand-display .card, #buffer-cards .card, .meld-group .card { pointer-events: auto; cursor: pointer; }
-        
-        /* 卡牌选中态：放大上浮，发光描边 */
         .card.selected { transform: translateY(-12px) scale(1.1); box-shadow: 0 10px 15px rgba(0,0,0,0.6), 0 0 0 3px #66bb6a !important; z-index: 10; }
         .card.grouped-meld { box-shadow: 0 0 0 2px #81c784, 1px 3px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #e8f5e9, #c8e6c9); }
         .card.dead-card { filter: grayscale(1) brightness(0.7); opacity: 0.7; }
 
-        /* 🔥 毛玻璃 AI 提示池 */
+        /* AI 提示池 */
         #ai-panel { padding: 8px; background: rgba(0,0,0,0.6); border-top: 1px solid rgba(255,255,255,0.1); max-height: 180px; overflow-y: auto; backdrop-filter: blur(8px); box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
         .hint-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #444; border-top: 1px solid rgba(255,255,255,0.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .hint-info { display: flex; flex-direction: column; gap: 5px; }
@@ -70,12 +64,11 @@
         .hint-item.danger { border-left-color: #ff9800; background: linear-gradient(90deg, rgba(255,152,0,0.15), rgba(255,255,255,0.05)); }
         .hint-item.danger .tactical-tag { background: #fb8c00; }
         
-        /* 游戏感极强的 3D 按钮 */
-        .hint-btn { background: linear-gradient(to bottom, #66bb6a, #43a047); border: none; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 900; font-size: 0.8rem; box-shadow: 0 3px 0 #2e7d32, 0 4px 6px rgba(0,0,0,0.3); text-shadow: 0 1px 1px rgba(0,0,0,0.3); transition: transform 0.1s, box-shadow 0.1s; cursor: pointer;}
+        .hint-btn { background: linear-gradient(to bottom, #66bb6a, #43a047); border: none; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 900; font-size: 0.8rem; box-shadow: 0 3px 0 #2e7d32, 0 4px 6px rgba(0,0,0,0.3); cursor: pointer;}
         .hint-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #2e7d32, 0 1px 2px rgba(0,0,0,0.3); }
         .hint-item.urgent .hint-btn { background: linear-gradient(to bottom, #ef5350, #e53935); box-shadow: 0 3px 0 #c62828, 0 4px 6px rgba(0,0,0,0.3); }
 
-        /* 🪵 底部原木牌架 */
+        /* 底部原木牌架 */
         #player-area { height: 48vh; background: var(--bg-wood); padding: 10px; display: flex; flex-direction: column; position: relative; border-top: 4px solid var(--wood-edge); box-shadow: 0 -5px 15px rgba(0,0,0,0.6); z-index: 30;}
         #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .header-title { font-size: 0.85rem; color: #d7ccc8; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
@@ -86,7 +79,7 @@
         #setup-progress-bar { height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-bottom: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);}
         #setup-progress-fill { height: 100%; background: linear-gradient(90deg, #ffd54f, #ffb300); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* 巨大化 3D 操作按钮 */
+        /* 巨大化操作按钮 */
         #action-bar { display: none; gap: 10px; margin-bottom: 8px; }
         .act-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 900; font-size: 1rem; color: white; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); transition: transform 0.1s;}
         .btn-play { background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 4px 0 #2e7d32, 0 5px 10px rgba(0,0,0,0.4); }
@@ -94,12 +87,15 @@
         .btn-delete { background: linear-gradient(to bottom, #ef5350, #e53935); box-shadow: 0 4px 0 #c62828, 0 5px 10px rgba(0,0,0,0.4); flex: 0.4; }
         .btn-delete:active { transform: translateY(4px); box-shadow: 0 0 0 #c62828, 0 2px 4px rgba(0,0,0,0.4); }
 
+        /* 暂存区：删除了弹窗，完全依赖这里录入 */
         #opp-buffer-zone { display: none; background: rgba(0,0,0,0.6); border: 2px dashed #ffb300; border-radius: 8px; padding: 8px; margin-bottom: 8px; align-items: center; justify-content: space-between; box-shadow: inset 0 0 10px rgba(255,179,0,0.1);}
         #buffer-cards { display: flex; flex-wrap: wrap; min-height: 52px; flex: 1; gap: 4px;}
         #buffer-confirm-btn { background: linear-gradient(to bottom, #ffa726, #f57c00); color: #fff; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 900; height: 100%; margin-left: 8px; box-shadow: 0 4px 0 #e65100; cursor: pointer;}
         #buffer-confirm-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #e65100; }
+        .kou-pai-btn { background: linear-gradient(to bottom, #757575, #616161); color: #fff; border: none; padding: 10px 12px; border-radius: 6px; font-weight: 900; margin-left: 8px; box-shadow: 0 4px 0 #424242; cursor: pointer;}
+        .kou-pai-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #424242; }
 
-        /* 手牌槽，稍微增加卡牌间距 */
+        /* 手牌槽 */
         #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 10px 8px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 8px; gap: 4px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05);}
         
         /* 键盘 */
@@ -112,22 +108,6 @@
         .btn-active-suit { background: #fff !important; box-shadow: 0 2px 0 #9e9e9e, inset 0 0 0 3px var(--p1-color); transform: translateY(2px);}
         .k-btn.spacer-btn { background: linear-gradient(to bottom, #616161, #424242); color: white; box-shadow: 0 4px 0 #212121; font-size: 0.85rem;} 
 
-        /* 弹窗样式精化 */
-        #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(5px);}
-        .qi-box { background: linear-gradient(to bottom, #263238, #1b2023); padding:20px; border-radius:16px; width:92%; max-width:350px; border: 2px solid #ffb300; box-shadow: 0 15px 40px rgba(0,0,0,0.9);}
-        .qi-title { color:#fff; margin-bottom:15px; text-align:center; font-size: 1.1rem; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
-        .qi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .qi-grid.full { grid-template-columns: 1fr; }
-        .qi-btn { padding: 12px 8px; border: none; border-radius: 8px; font-weight: 900; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; color: white; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); transition: transform 0.1s;}
-        .qi-btn:active { transform: translateY(3px); box-shadow: none !important; }
-        .qi-btn small { font-weight: normal; opacity: 0.9; font-size: 0.75rem; margin-top: 4px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;}
-        .btn-run { background: linear-gradient(to bottom, #42a5f5, #1e88e5); box-shadow: 0 4px 0 #1565c0; }
-        .btn-run-long { background: linear-gradient(to bottom, #039be5, #0277bd); box-shadow: 0 4px 0 #01579b; }
-        .btn-joker { background: linear-gradient(to bottom, #ab47bc, #8e24aa); box-shadow: 0 4px 0 #6a1b9a; }
-        .btn-set { background: linear-gradient(to bottom, #ffa726, #fb8c00); box-shadow: 0 4px 0 #ef6c00; }
-        .qi-btn-cancel { width:100%; padding: 14px; background: linear-gradient(to bottom, #757575, #616161); color: #fff; border: none; border-radius: 8px; font-weight: 900; margin-top: 5px; box-shadow: 0 4px 0 #424242; cursor: pointer;}
-
-        #split-modal { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background: linear-gradient(to bottom, #37474f, #263238); padding:20px; border-radius:12px; z-index:50; border: 2px solid #66bb6a; flex-direction: column; gap: 15px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
     </style>
 </head>
 <body>
@@ -135,6 +115,7 @@
 <div id="app-container">
     <div id="sys-toolbar">
         <button class="sys-btn" onclick="undo()">↩️ 撤回上一步</button>
+        <button class="sys-btn btn-next-turn" onclick="nextTurn()">⏭️ 结束回合(下一家)</button>
         <button class="sys-btn" onclick="resetGame()" style="color:#ff8a80; border-color:rgba(255,138,128,0.4);">🔄 重置牌局</button>
     </div>
 
@@ -146,14 +127,14 @@
     </div>
 
     <div id="phase-bar">
-        <span id="phase-text">⚖️ 洗牌录入中...</span>
+        <span id="phase-text" style="color: white; text-shadow: 0 1px 2px black;">⚖️ 洗牌录入中...</span>
         <span id="pool-stat">桌面已出: 0 张</span>
     </div>
 
     <div id="table-area"><div id="table-content"></div></div>
 
     <div id="ai-panel">
-        <div style="color:#aaa; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;">🚀 正在准备卡牌... 满 20 张将自动启动战神引擎</div>
+        <div style="color:#aaa; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;">🚀 正在准备卡牌... 满 20 张将自动启动引擎</div>
     </div>
 
     <div id="player-area">
@@ -175,7 +156,10 @@
 
         <div id="opp-buffer-zone">
             <div id="buffer-cards"></div>
-            <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️ 确认上桌</button>
+            <div style="display:flex;">
+                <button class="kou-pai-btn" onclick="recordKouPai()">⏬ 暗盖</button>
+                <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️ 上桌</button>
+            </div>
         </div>
 
         <div id="hand-display" onclick="switchPlayer(0)"></div>
@@ -206,23 +190,6 @@
             </div>
         </div>
     </div>
-
-    <div id="quick-input-modal">
-        <div class="qi-box">
-            <h3 class="qi-title" id="qi-title-txt">对手出牌预测</h3>
-            <div id="qi-options"></div>
-            <button class="qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动输入</button>
-        </div>
-    </div>
-
-    <div id="split-modal">
-        <h4 style="color:white; margin-bottom:5px; font-weight:900;">✂️ 在此处切断牌组？</h4>
-        <p style="color:#aaa; font-size:0.8rem; margin-bottom:15px;">拆开后，你可以用手牌去连接断开的部分。</p>
-        <div style="display:flex; gap:10px;">
-            <button class="sys-btn" style="flex:1; background:linear-gradient(to bottom, #66bb6a, #43a047); color:white; border:none; padding:10px; font-weight:900; border-radius:6px;" onclick="confirmSplit()">确认拆解</button>
-            <button class="sys-btn" style="flex:1; padding:10px; font-weight:bold; border-radius:6px;" onclick="document.getElementById('split-modal').style.display='none'">取消</button>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -237,8 +204,6 @@
     let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
     let historyStack = [];
     let selectedIndices = new Set();
-    let tempPendingCard = null;
-    let splitPending = null;
 
     const rankVal = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker':99, 'Spacer':0 };
     const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5, 'none':99 };
@@ -253,11 +218,11 @@
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV20', JSON.stringify(state));
+        localStorage.setItem('magicLamiV21', JSON.stringify(state));
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV20');
+        const saved = localStorage.getItem('magicLamiV21');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -271,14 +236,14 @@
             state = JSON.parse(historyStack[historyStack.length - 1]);
             selectedIndices.clear();
             applyUIState(); render(); 
-            if (state.isGameStarted) calculateAI(); else document.getElementById('ai-panel').innerHTML = "<div style='color:#888; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;'>🚀 正在准备卡牌... 满 20 张将自动启动战神引擎</div>";
-            localStorage.setItem('magicLamiV20', JSON.stringify(state));
+            if (state.isGameStarted) calculateAI(); else document.getElementById('ai-panel').innerHTML = "<div style='color:#888; font-size:0.85rem; text-align:center; padding-top:20px; font-weight:bold;'>🚀 正在准备卡牌... 满 20 张将自动启动引擎</div>";
+            localStorage.setItem('magicLamiV21', JSON.stringify(state));
         }
     }
 
     function resetGame() {
-        if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV20');
+        if(confirm("🚨 确定要清空这局记录重新开始吗？")) {
+            localStorage.removeItem('magicLamiV21');
             location.reload();
         }
     }
@@ -302,6 +267,46 @@
         if(card.rank === 'A') return 15;
         if(['J','Q','K'].includes(card.rank)) return 10;
         return getVal(card.rank);
+    }
+
+    // 🛡️ 铁腕验证引擎：绝对不允许非法牌组上桌
+    function isValidMeld(cards) {
+        if(cards.length < 3) return false;
+        let reals = cards.filter(c => c.rank !== 'Joker');
+        let jCount = cards.length - reals.length;
+        if(reals.length === 0) return true; // 全是鬼牌
+
+        // 验证斩牌 (同数不同花)
+        let isZhan = reals.every(c => c.rank === reals[0].rank);
+        if(isZhan) {
+            if(cards.length > 4) return false;
+            let suits = new Set(reals.map(c => c.suit));
+            if(suits.size !== reals.length) return false; // 花色不能重复
+            return true;
+        }
+
+        // 验证同花顺 (同花连续)
+        let isShunzi = reals.every(c => c.suit === reals[0].suit);
+        if(isShunzi) {
+            let vals = reals.map(c => getVal(c.rank));
+            // A的高位处理
+            if(vals.includes(1) && vals.some(v => v > 10)) {
+                vals = vals.map(v => v === 1 ? 14 : v);
+            }
+            vals.sort((a,b) => a - b);
+            
+            // 顺子中不能有重复数字
+            if(new Set(vals).size !== vals.length) return false; 
+
+            // 计算逻辑跨度
+            let span = vals[vals.length-1] - vals[0] + 1;
+            let internalGaps = span - reals.length;
+            
+            if(jCount < internalGaps) return false; // 鬼牌不够填补空缺
+            if(cards.length > 14) return false; // 长度不能超过 14 (A-K-A)
+            return true;
+        }
+        return false;
     }
 
     function getGroupBounds(cards) {
@@ -418,13 +423,19 @@
         if(save) { render(); saveState(); }
     }
 
+    // ⏭️ 核心新增：回合流转控制器
+    function nextTurn() {
+        if(!state.isGameStarted) { alert("游戏尚未开始！"); return; }
+        state.activeP = (state.activeP + 1) % 4;
+        switchPlayer(state.activeP);
+    }
+
     function setSuit(s, c, btn, save = true) {
         state.curS = s; state.curC = c;
         if(btn) { document.querySelectorAll('#suit-btns .k-btn').forEach(b => b.classList.remove('btn-active-suit')); btn.classList.add('btn-active-suit'); }
         if(save) saveState();
     }
 
-    // 录入动作
     function inputRank(r) {
         const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : r === 'Spacer' ? {suit:'none', rank:'Spacer', color:'black'} : {suit:state.curS, rank:r, color:state.curC};
         if (state.activeP === 0) {
@@ -439,62 +450,11 @@
             }
         } else {
             if (state.isGameStarted) {
-                if (state.oppBuffer.length === 0 && r !== 'Joker' && r !== 'Spacer') { showQuickInputModal(r); return; } 
-                else if (r !== 'Spacer') state.oppBuffer.push(card);
+                // 彻底废除弹窗，直接推入缓冲区
+                if (r !== 'Spacer') state.oppBuffer.push(card);
             }
         }
         render(); saveState();
-    }
-
-    function showQuickInputModal(r) {
-        tempPendingCard = {suit:state.curS, rank:r, color:state.curC};
-        let rVal = getVal(r);
-        let colorStyle = state.curC === 'red' ? '#ff5252' : '#66bb6a';
-        document.getElementById('qi-title-txt').innerHTML = `预测 P${state.activeP+1} 打出<br><span style="color:${colorStyle}; font-size:1.6rem; display:inline-block; margin-top:8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${state.curS} ${r}</span>`;
-        
-        let isOppIceBreaking = state.oppCounts[state.activeP] === 20;
-        let html = '';
-        let r2 = getRankByVal(rVal+1), r3 = getRankByVal(rVal+2), r4 = getRankByVal(rVal+3);
-        
-        html += '<div class="qi-grid">';
-        if (rVal <= 11) html += `<button class="qi-btn btn-run" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}'])">顺子 3 张<small>${state.curS}[${r}, ${r2}, ${r3}]</small></button>`;
-        if (rVal <= 10) html += `<button class="qi-btn btn-run-long" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}', '${r4}'])">顺子 4 张<small>${state.curS}[${r}...${r4}]</small></button>`;
-        html += '</div>';
-
-        if (rVal <= 12) {
-            html += `<div class="qi-grid full"><button class="qi-btn btn-joker" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌顺子<small>${state.curS}[${r}, ${r2}, 🤡]</small></button></div>`;
-        }
-        
-        if (!isOppIceBreaking) {
-            html += '<div class="qi-grid" style="margin-top: 10px;">';
-            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">群组 3 张<small>[${r}, ${r}, ${r}]</small></button>`;
-            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">群组 4 张<small>[${r}, ${r}, ${r}, ${r}]</small></button>`;
-            html += '</div>';
-        } else {
-            html += '<div style="margin-top:15px; margin-bottom: 5px; font-size:0.8rem; color:#bbb; text-align:center; background:rgba(0,0,0,0.3); padding:5px; border-radius:4px;">🔒 尚未破冰，规则限定只能出同花顺</div>';
-        }
-        
-        document.getElementById('qi-options').innerHTML = html;
-        document.getElementById('quick-input-modal').style.display = 'flex';
-    }
-
-    function execQuickInput(type, suit, ranks) {
-        let cards = [];
-        if (type === 'set') {
-            let dS = ['♠️','♥️','♣️','♦️'];
-            cards = ranks.map((r, i) => ({suit: dS[i], rank: r, color: (dS[i]==='♥️'||dS[i]==='♦️')?'red':'black'}));
-        } else {
-            cards = ranks.map(r => r==='Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : {suit: suit, rank: r, color: state.curC});
-        }
-        state.tableGroups.push({ owner: state.activeP, cards: smartSort(cards) });
-        state.oppCounts[state.activeP] -= cards.length;
-        closeQuickInput(true); switchPlayer(0); 
-    }
-    
-    function closeQuickInput(isSuccess) {
-        document.getElementById('quick-input-modal').style.display = 'none';
-        if (!isSuccess && tempPendingCard) state.oppBuffer.push(tempPendingCard);
-        tempPendingCard = null; render(); saveState();
     }
 
     function updateProgress() {
@@ -507,10 +467,18 @@
         
         let fillEl = document.getElementById('setup-progress-fill');
         if(fillEl) fillEl.style.width = `${(count/20)*100}%`;
+        
+        let startBtn = document.getElementById('start-game-btn');
+        let pBar = document.getElementById('setup-progress-bar');
+        if(startBtn && pBar) {
+            startBtn.style.display = (count >= 20) ? 'block' : 'none';
+            pBar.style.display = (count >= 20) ? 'none' : 'block';
+        }
     }
 
     function startGame() {
         state.isGameStarted = true;
+        document.getElementById('start-game-btn').style.display = 'none';
         selectedIndices.clear(); render(); calculateAI(); saveState();
     }
 
@@ -523,11 +491,23 @@
         render(); saveState();
     }
 
+    // 🛡️ 应用规则引擎：验证自己出的牌
     function playSelectedAsNewGroup() {
         if (selectedIndices.size === 0) return;
         let sortedIndices = Array.from(selectedIndices).sort((a,b)=>b-a);
-        let newGroupCards = [];
-        sortedIndices.forEach(idx => { newGroupCards.unshift(state.myHand[idx]); state.myHand.splice(idx, 1); });
+        let newGroupCards = sortedIndices.map(idx => state.myHand[idx]);
+        
+        if (!isValidMeld(newGroupCards)) {
+            alert("⛔ 牌组不符合规则（必须是同花顺，或不同花色的同数群组，且不能有重复卡）！");
+            return;
+        }
+        
+        if (!state.isBroken) {
+            let isZhan = newGroupCards.filter(c=>c.rank!=='Joker').every((c,i,arr)=>c.rank===arr[0].rank);
+            if (isZhan) { alert("⛔ 破冰第一手必须是同花顺，不能是群组！"); return; }
+        }
+
+        sortedIndices.forEach(idx => state.myHand.splice(idx, 1));
         state.tableGroups.push({ owner: 0, cards: smartSort(newGroupCards) });
         state.oppCounts[0] -= newGroupCards.length;
         selectedIndices.clear(); state.isBroken = true; 
@@ -540,49 +520,23 @@
             let sortedIndices = Array.from(selectedIndices).sort((a,b)=>b-a);
             let cardsToAppend = sortedIndices.map(idx => state.myHand[idx]);
             let tempGroup = [...g.cards, ...cardsToAppend];
-            let bounds = getGroupBounds(smartSort(tempGroup));
             
-            let isValid = false;
-            if(bounds) {
-                if(bounds.type === 'set' && tempGroup.length <= 4) {
-                    let suits = tempGroup.filter(c=>c.rank!=='Joker').map(c=>c.suit);
-                    if(new Set(suits).size === suits.length) isValid = true; 
-                } else if (bounds.type === 'run' && bounds.first >= 1 && bounds.last <= 14) {
-                    let checkRun = smartSort(tempGroup);
-                    let realCount = checkRun.filter(c=>c.rank!=='Joker').length;
-                    if(realCount > 0 && bounds.last - bounds.first + 1 === tempGroup.length) isValid = true;
-                }
-            }
-            if(isValid) {
+            // 🛡️ 严格验证接牌后的整体合法性
+            if(isValidMeld(tempGroup)) {
                 sortedIndices.forEach(idx => state.myHand.splice(idx, 1));
                 g.cards = smartSort(tempGroup);
                 state.oppCounts[0] -= cardsToAppend.length;
                 selectedIndices.clear(); render(); calculateAI(); saveState();
-            } else { alert("⛔ 规则限制：非法接牌。"); }
+            } else { alert("⛔ 非法接牌！"); }
         } 
         else {
-            if(g.cards.length >= 6 && cardIndex > 2 && cardIndex < g.cards.length - 2) {
-                splitPending = { gIdx: groupIndex, cIdx: cardIndex };
-                document.getElementById('split-modal').style.display = 'flex';
-            } else {
-                if(confirm(`撤回 P${g.owner+1} 的牌组回到手牌或暂存区？`)) {
-                    if (g.owner === 0) { state.myHand.push(...g.cards); state.oppCounts[0] += g.cards.length; state.tableGroups.splice(groupIndex, 1); switchPlayer(0); } 
-                    else { state.oppBuffer = [...g.cards]; state.tableGroups.splice(groupIndex, 1); switchPlayer(g.owner); }
-                    render(); calculateAI(); saveState();
-                }
+            if(confirm(`要将 P${g.owner+1} 的牌组撤回重编吗？`)) {
+                if (g.owner === 0) { state.myHand.push(...g.cards); state.oppCounts[0] += g.cards.length; state.tableGroups.splice(groupIndex, 1); switchPlayer(0); } 
+                else { state.oppBuffer = [...g.cards]; state.tableGroups.splice(groupIndex, 1); switchPlayer(g.owner); }
+                render(); calculateAI(); saveState();
             }
         }
         event.stopPropagation();
-    }
-
-    function confirmSplit() {
-        if(!splitPending) return;
-        let g = state.tableGroups[splitPending.gIdx];
-        let part1 = g.cards.slice(0, splitPending.cIdx);
-        let part2 = g.cards.slice(splitPending.cIdx);
-        state.tableGroups.splice(splitPending.gIdx, 1, {owner:g.owner, cards:part1}, {owner:g.owner, cards:part2});
-        splitPending = null; document.getElementById('split-modal').style.display = 'none';
-        render(); calculateAI(); saveState();
     }
 
     function deleteSelectedCards() {
@@ -592,15 +546,37 @@
         }
     }
 
+    // 🛡️ 应用规则引擎：验证对手出的牌
     function confirmOpponentBuffer() {
         if (state.oppBuffer.length === 0) return;
+        
+        if (!isValidMeld(state.oppBuffer)) {
+            alert("⛔ 录入的牌组不符合游戏规则！\n请检查是否漏选花色，或包含重复卡牌。");
+            return;
+        }
+
+        if (state.oppCounts[state.activeP] === 20) {
+            let isZhan = state.oppBuffer.filter(c=>c.rank!=='Joker').every((c,i,arr)=>c.rank===arr[0].rank);
+            if (isZhan) { alert("⛔ 该玩家尚未破冰，第一手必须出同花顺！"); return; }
+        }
+
         state.tableGroups.push({ owner: state.activeP, cards: smartSort([...state.oppBuffer]) });
         state.oppCounts[state.activeP] -= state.oppBuffer.length;
-        state.oppBuffer = []; switchPlayer(0); render(); calculateAI(); saveState();
+        state.oppBuffer = []; 
+        render(); calculateAI(); saveState(); // 重点：不再强行切回 P1
     }
+    
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // --- AI 引擎 ---
+    function recordKouPai() {
+        if(state.activeP > 0 && state.oppCounts[state.activeP] > 0) {
+            state.oppCounts[state.activeP]--;
+            state.oppBuffer = [];
+            render(); saveState(); // 也不强行切回
+        }
+    }
+
+    // --- 🧠 深度强化版 AI (查找最长连顺) ---
     function findInHand(suit, valStr) {
         if (valStr === 'Joker') return state.myHand.find(c => c.rank === 'Joker');
         return state.myHand.find(c => c.suit === suit && c.rank === valStr && c.rank !== 'Spacer');
@@ -622,25 +598,34 @@
         const suits = ['♠️','♥️','♣️','♦️'];
 
         if (!state.isBroken) {
-            document.getElementById('phase-text').innerText = "🧊 破冰准备阶段 (须打出同花顺)";
+            document.getElementById('phase-text').innerText = "🧊 破冰准备阶段 (第一手必须打出同花顺)";
             suits.forEach(suit => {
                 let numsSet = new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)));
                 if (numsSet.has(1)) numsSet.add(14); 
                 let nums = [...numsSet].sort((a,b)=>a-b);
                 
+                // 寻找最长顺子
+                for (let i = 0; i < nums.length; i++) {
+                    let seq = [nums[i]];
+                    for (let j = i + 1; j < nums.length; j++) {
+                        if (nums[j] === seq[seq.length - 1] + 1) seq.push(nums[j]); else break;
+                    }
+                    if (seq.length >= 3) {
+                        let cards = seq.map(v => findInHand(suit, v === 14 ? 'A' : getRankByVal(v)));
+                        if(cards.every(c=>c)) {
+                            addHint({ type: 'ice', cards: cards, suit: suit, txt: `${suit}[${numToRStr(seq[0]===14?1:seq[0])}..${numToRStr(seq[seq.length-1]===14?1:seq[seq.length-1])}]` });
+                        }
+                    }
+                }
+                
+                // 补足 3张带鬼牌的破冰方案
                 for(let i=0; i<nums.length; i++) {
                     let v = nums[i];
                     if (v > 12) continue; 
-                    
-                    let r1 = v === 14 ? 'A' : getRankByVal(v);
-                    let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
-                    let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
-
-                    if (nums.includes(v+1) && nums.includes(v+2)) {
-                        let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2), c3 = findInHand(suit, r3);
-                        if(c1&&c2&&c3) addHint({ type: 'ice', cards: [c1, c2, c3], suit: suit, txt: `${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},${numToRStr((v+2)===14?1:(v+2))}]` });
-                    }
                     if (jokers.length > 0) {
+                        let r1 = v === 14 ? 'A' : getRankByVal(v);
+                        let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
+                        let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
                         if (nums.includes(v+1) && !nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2);
                             if(c1&&c2) addHint({ type: 'ice', cards: [c1, c2, jokers[0]], suit: suit, txt: `${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},🤡]` });
@@ -653,7 +638,8 @@
                 }
             });
         } else {
-            document.getElementById('phase-text').innerText = "🔥 自由博弈中 (目的：清空手牌)";
+            // ...自由阶段的接牌判断 (依然只看单张，多张用户可以自己选)...
+            document.getElementById('phase-text').innerText = "🔥 自由出牌中 (点上面结束本回合)";
             
             state.tableGroups.forEach((g, gIdx) => {
                 let bounds = getGroupBounds(g.cards);
@@ -670,36 +656,45 @@
                         let rNext = getRankByVal(bounds.last + 1);
                         if(rNext) {
                             let match = findInHand(bounds.suit, rNext);
-                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (同花顺)` }); 
+                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (向后)` }); 
                         }
                     }
                     if (bounds.first > 1) {
                         let rPrev = getRankByVal(bounds.first - 1);
                         if(rPrev) {
                             let match = findInHand(bounds.suit, rPrev);
-                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (同花顺)` }); 
+                            if (match) addHint({ type: 'append', cards: [match], group: g, gIdx: gIdx, txt: `接龙第 ${gIdx+1} 组 (向前)` }); 
                         }
                     }
                 }
             });
 
+            // 自由出牌：新顺子
             suits.forEach(suit => {
                 let numsSet = new Set(handReals.filter(c => c.suit === suit).map(c => getVal(c.rank)));
                 if (numsSet.has(1)) numsSet.add(14);
                 let nums = [...numsSet].sort((a,b)=>a-b);
                 
+                for (let i = 0; i < nums.length; i++) {
+                    let seq = [nums[i]];
+                    for (let j = i + 1; j < nums.length; j++) {
+                        if (nums[j] === seq[seq.length - 1] + 1) seq.push(nums[j]); else break;
+                    }
+                    if (seq.length >= 3) {
+                        let cards = seq.map(v => findInHand(suit, v === 14 ? 'A' : getRankByVal(v)));
+                        if(cards.every(c=>c)) {
+                            addHint({ type: 'new', meldType: 'run', cards: cards, suit: suit, txt: `打出顺子: ${suit}[${numToRStr(seq[0]===14?1:seq[0])}..${numToRStr(seq[seq.length-1]===14?1:seq[seq.length-1])}]` });
+                        }
+                    }
+                }
+                
                 for(let i=0; i<nums.length; i++) {
                     let v = nums[i];
                     if (v > 12) continue;
-                    let r1 = v === 14 ? 'A' : getRankByVal(v);
-                    let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
-                    let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
-                    
-                    if (nums.includes(v+1) && nums.includes(v+2)) {
-                        let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2), c3 = findInHand(suit, r3);
-                        if(c1&&c2&&c3) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, c3], suit: suit, txt: `打出: ${suit}[${numToRStr(v===14?1:v)}..${numToRStr((v+2)===14?1:(v+2))}]` });
-                    }
                     if (jokers.length > 0) {
+                        let r1 = v === 14 ? 'A' : getRankByVal(v);
+                        let r2 = (v+1) === 14 ? 'A' : getRankByVal(v+1);
+                        let r3 = (v+2) === 14 ? 'A' : getRankByVal(v+2);
                         if (nums.includes(v+1) && !nums.includes(v+2)) {
                             let c1 = findInHand(suit, r1), c2 = findInHand(suit, r2);
                             if(c1&&c2) addHint({ type: 'new', meldType: 'run', cards: [c1, c2, jokers[0]], suit: suit, txt: `打出(含鬼): ${suit}[${numToRStr(v===14?1:v)},${numToRStr((v+1)===14?1:(v+1))},🤡]` });
@@ -712,12 +707,14 @@
                 }
             });
 
+            // 自由出牌：新群组
             Object.keys(rankVal).filter(k=>k!=='Joker'&&k!=='Spacer').forEach(r => {
                 let sameRanks = handReals.filter(c => c.rank === r);
                 let uniqueSuits = new Set(), validZhan = [];
                 sameRanks.forEach(c => { if(!uniqueSuits.has(c.suit)) { uniqueSuits.add(c.suit); validZhan.push(c); }});
-                if (validZhan.length >= 3) addHint({ type: 'new', meldType: 'set', cards: validZhan.slice(0,3), txt: `打出: 群组 [${r},${r},${r}]` });
-                if (validZhan.length === 2 && jokers.length > 0) addHint({ type: 'new', meldType: 'set', cards: [validZhan[0], validZhan[1], jokers[0]], txt: `打出(含鬼): 群组 [${r},${r},🤡]` });
+                if (validZhan.length >= 3) addHint({ type: 'new', meldType: 'set', cards: validZhan.slice(0,3), txt: `打出群组: [${r},${r},${r}]` });
+                if (validZhan.length === 4) addHint({ type: 'new', meldType: 'set', cards: validZhan.slice(0,4), txt: `打出群组: [${r},${r},${r},${r}]` });
+                if (validZhan.length === 2 && jokers.length > 0) addHint({ type: 'new', meldType: 'set', cards: [validZhan[0], validZhan[1], jokers[0]], txt: `打出群组(含鬼): [${r},${r},🤡]` });
             });
         }
 
@@ -781,7 +778,7 @@
                     </div>
                     <div class="hint-points">打出 [${displayCards}] -> 减少 ${hint.pointsCleared} 罚分</div>
                 </div>
-                <button class="hint-btn">出牌</button>
+                <button class="hint-btn">执行</button>
             `;
             
             div.querySelector('button').onclick = () => {
@@ -803,7 +800,7 @@
             panel.appendChild(div);
         });
 
-        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#bbb; font-size:0.85rem; text-align:center; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px;'>⚠️ 暂无最优出牌方案，建议静观其变保分。</div>";
+        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#bbb; font-size:0.85rem; text-align:center; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px;'>⚠️ 暂无建议，继续暗盖或等牌。</div>";
     }
 
     function render() {
@@ -817,7 +814,7 @@
         
         if (state.isGameStarted) {
             groupHand();
-            document.getElementById('phase-text').innerText = state.isBroken ? "🔥 轮到你！尽可能清空手牌" : "🧊 第一手：必须打出同花顺";
+            // 文本已由 calculateAI 接管
         } else {
             document.getElementById('phase-text').innerText = `⚖️ 发牌中... (${count}/20)`;
         }
@@ -878,13 +875,6 @@
             </div>`;
         }).join('');
         document.getElementById('pool-stat').innerText = `桌面已出: ${totalOut} 张`;
-    }
-
-    function countInWorld(suit, rank) {
-        let count = 0;
-        state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
-        state.discardPool.forEach(c => { if(c.suit === suit && c.rank === rank) count++; });
-        return count;
     }
 
     window.onload = () => loadState();
