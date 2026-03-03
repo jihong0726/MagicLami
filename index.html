@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V14 - 战术统治版</title>
+    <title>MagicLami V15</title>
     <style>
         :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; --bg-table: rgba(0,0,0,0.3); }
-        body.anti-peep { --bg-dark: #000; --bg-table: #050505; filter: brightness(0.75); }
-        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; color: white; }
-        #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); display: flex; flex-direction: column; height: 100%; position: relative; transition: background 0.3s;}
+        #app-container { width: 100%; max-width: 480px; background-color: var(--bg-dark); display: flex; flex-direction: column; height: 100%; position: relative; }
 
-        #sys-toolbar { display: flex; justify-content: space-between; background: #000; padding: 6px 10px; font-size: 0.75rem; border-bottom: 1px solid #222; }
-        .sys-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        /* 顶部极简工具栏 */
+        #sys-toolbar { display: flex; justify-content: space-between; background: #000; padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid #222; }
+        .sys-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
         .sys-btn:active { background: #444; }
 
+        /* 玩家席位 */
         #player-hub { display: flex; background: #111; padding: 4px; gap: 4px; z-index: 10;}
         .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: #888; background: #222; position: relative;}
         .p-tab.active { color: #fff; background: var(--p1-color); box-shadow: 0 2px 5px rgba(76,175,80,0.4); }
@@ -24,14 +24,17 @@
         .p-tab.danger { animation: flashRed 1.5s infinite; } 
         @keyframes flashRed { 0% { background: #222; } 50% { background: #b71c1c; color: white;} 100% { background: #222; } }
 
-        #table-area { flex: 1; padding: 8px; overflow-y: auto; background: var(--bg-table); transition: all 0.3s;}
-        #table-area.minimap { padding: 4px; transform: scale(0.85); transform-origin: top center; } 
-        
-        .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; gap: 2px;}
+        /* 状态条 */
+        #phase-bar { padding: 6px 10px; font-size: 0.75rem; background: rgba(0,0,0,0.8); color: #ffeb3b; display: flex; justify-content: space-between; }
+
+        /* 桌面区 */
+        #table-area { flex: 1; padding: 8px; overflow-y: auto; background: var(--bg-table); }
+        .meld-group { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-wrap: wrap; border: 2px solid transparent; min-height: 54px; position: relative; gap: 2px; cursor: pointer;}
         .meld-group.highlight-target { border-color: #4caf50; background: rgba(76, 175, 80, 0.15); box-shadow: 0 0 8px rgba(76, 175, 80, 0.4); }
         .owner-tag { position: absolute; right: 4px; top: 2px; font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: bold;}
 
-        .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 48px; font-weight: bold; font-size: 1.05rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.5); border: 1px solid #ccc; color: #212121; position: relative; transition: all 0.15s;}
+        /* 卡牌样式 */
+        .card { background: white; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 48px; font-weight: bold; font-size: 1.05rem; box-shadow: 1px 2px 3px rgba(0,0,0,0.5); border: 1px solid #ccc; color: #212121; position: relative; transition: transform 0.1s; pointer-events: none; }
         .card.red { color: #d32f2f; }
         .card.joker { color: #fbc02d; font-size: 0.7rem; border: 2px solid #fbc02d; background: #fffde7;}
         .joker-tag { position: absolute; top: -6px; right: -6px; background: #9c27b0; color: white; font-size: 0.55rem; padding: 2px 4px; border-radius: 4px; z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.5);}
@@ -43,11 +46,7 @@
         .card.selected { transform: translateY(-8px) scale(1.05); box-shadow: 0 6px 10px rgba(0,0,0,0.7); border: 2px solid var(--p1-color) !important; z-index: 5;}
         .card.grouped-meld { border: 2px solid #81c784; background: #e8f5e9; }
 
-        #intel-marquee { background: #111; color: #ffeb3b; font-size: 0.7rem; padding: 4px; white-space: nowrap; overflow: hidden; border-top: 1px solid #333; }
-        .intel-text { display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite; font-weight: bold;}
-        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
-
-        /* 🔥 AI 战术情绪 UI */
+        /* AI 提示池 */
         #ai-panel { padding: 6px; background: #1a1a1a; border-top: 1px solid #000; max-height: 140px; overflow-y: auto; }
         .hint-item { font-size: 0.8rem; padding: 8px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; background: #222; }
         .hint-btn { border: none; color: white; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
@@ -62,10 +61,15 @@
         .hint-danger { border-color: #757575; background: rgba(117,117,117,0.1); border-left: 4px solid #757575; color: #aaa;}
         .hint-danger .hint-btn { background: #757575; }
 
+        /* 底部控制区 */
         #player-area { height: 48vh; background: #0a3528; padding: 8px; display: flex; flex-direction: column; position: relative; border-top: 1px solid #000;}
+        
+        /* 修复丢失的容器 */
         #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .header-title { font-size: 0.8rem; color: #a5d6a7; font-weight: bold;}
+        .header-right { display: flex; gap: 10px; align-items: center; }
         .penalty-txt { color: #ff5252; font-weight: bold; font-size: 0.8rem; background: #333; padding: 2px 6px; border-radius: 4px;} 
+        #hand-count-txt { font-weight:bold; color:#ffeb3b; font-size:0.9rem; }
         
         #setup-progress-bar { height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
         #setup-progress-fill { height: 100%; background: #ffeb3b; width: 0%; transition: width 0.3s; }
@@ -83,6 +87,7 @@
 
         #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 6px; gap: 2px;}
         
+        /* 键盘 */
         .keyboard-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 6px; }
         .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
         .k-btn { background: #e0e0e0; border: none; border-radius: 4px; font-weight: bold; padding: 10px 0; box-shadow: 0 3px 0 #999; color: #333; font-size: 1.05rem; }
@@ -92,12 +97,14 @@
         .btn-active-suit { background: #fff !important; box-shadow: inset 0 0 0 3px var(--p1-color); }
         .k-btn.spacer-btn { background: #444; color: white; box-shadow: 0 3px 0 #111; font-size: 0.8rem;} 
 
+        /* 快捷预测面板 */
         #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; }
         .qi-box { background:#1e1e1e; padding:15px; border-radius:10px; width:90%; max-width:350px; border: 2px solid #ff9800;}
         .qi-title { color:#ffeb3b; margin-bottom:12px; text-align:center; font-size: 1rem;}
         .qi-btn { width:100%; padding:12px; margin-bottom:8px; background:#e65100; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:0.95rem; box-shadow: 0 3px 0 #bf360c;}
         .qi-btn-cancel { background:#444; box-shadow: 0 3px 0 #222; margin-top: 5px; }
 
+        /* 拆牌弹窗 */
         #split-modal { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#333; padding:15px; border-radius:8px; z-index:50; border: 2px solid #4caf50; flex-direction: column; gap: 10px; width: 80%; text-align: center;}
     </style>
 </head>
@@ -105,12 +112,8 @@
 
 <div id="app-container">
     <div id="sys-toolbar">
-        <button class="sys-btn" onclick="undo()">↩️ 撤销</button>
-        <div>
-            <button class="sys-btn" onclick="toggleMinimap()">🔍 视图</button>
-            <button class="sys-btn" onclick="toggleAntiPeep()">👁️ 防窥</button>
-            <button class="sys-btn" onclick="exportState()">📤 导出</button>
-        </div>
+        <button class="sys-btn" onclick="undo()">↩️ 撤销 (Undo)</button>
+        <button class="sys-btn" onclick="resetGame()" style="color:#ff5252; border-color:#ff5252;">🔄 重新开局</button>
     </div>
 
     <div id="player-hub">
@@ -120,16 +123,24 @@
         <div class="p-tab" id="tab-3" onclick="switchPlayer(3)">P4 (上)<span class="p-count" id="c-p3">20张</span></div>
     </div>
 
-    <div id="intel-marquee"><span class="intel-text" id="intel-txt">🤖 黑暗森林法则：追踪 106 张牌，计算绝对垄断与抢位...</span></div>
+    <div id="phase-bar">
+        <span id="phase-text">⚖️ 准备录入阶段</span>
+        <span id="pool-stat">总出牌: 0 张</span>
+    </div>
 
     <div id="table-area"><div id="table-content"></div></div>
 
-    <div id="ai-panel"></div>
+    <div id="ai-panel">
+        <div style="color:#666; font-size:0.8rem; text-align:center; padding-top:10px;">等待满 20 张启动 AI 大脑...</div>
+    </div>
 
     <div id="player-area">
         <div id="hand-header">
             <span class="header-title" id="hand-title">我的手牌</span>
-            <span class="penalty-txt" id="penalty-score">罚分: 0</span>
+            <div class="header-right">
+                <span class="penalty-txt" id="penalty-score">罚分: 0</span>
+                <span id="hand-count-txt">0 / 20</span>
+            </div>
         </div>
         
         <div id="setup-progress-bar"><div id="setup-progress-fill"></div></div>
@@ -143,8 +154,8 @@
         <div id="opp-buffer-zone">
             <div id="buffer-cards"></div>
             <div>
-                <button class="kou-pai-btn" onclick="recordKouPai()">⏬ 暗盖牌</button>
-                <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️上桌</button>
+                <button class="kou-pai-btn" onclick="recordKouPai()">⏬ 暗盖</button>
+                <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️ 上桌</button>
             </div>
         </div>
 
@@ -181,7 +192,7 @@
         <div class="qi-box">
             <h3 class="qi-title" id="qi-title-txt">对手出牌预测</h3>
             <div id="qi-options"></div>
-            <button class="qi-btn qi-btn-cancel" onclick="closeQuickInput(false)">手动输入</button>
+            <button class="qi-btn qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动编辑</button>
         </div>
     </div>
 
@@ -195,11 +206,12 @@
 </div>
 
 <script>
+    // --- 核心状态 ---
     const DEFAULT_STATE = {
         myHand: [], tableGroups: [], oppBuffer: [],
-        oppCounts: [20, 20, 20, 20],
+        oppCounts: [20, 20, 20, 20], discardPool: [],
         activeP: 0, isGameStarted: false, isBroken: false, 
-        curS: '♠️', curC: 'black', antiPeep: false, minimap: false
+        curS: '♠️', curC: 'black'
     };
     
     let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -212,17 +224,17 @@
     const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5, 'none':99 };
 
     function getVal(r) { return rankVal[r]; }
+    // 强制数字转回字符串逻辑 (修复 11->J, 12->Q, 13->K)
     function getRankByVal(val) { return Object.keys(rankVal).find(k => rankVal[k] === val); }
-    function numToRStr(val) { return {1:'A', 11:'J', 12:'Q', 13:'K'}[val] || val.toString(); }
 
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV14', JSON.stringify(state));
+        localStorage.setItem('magicLamiV15', JSON.stringify(state));
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV14');
+        const saved = localStorage.getItem('magicLamiV15');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -236,42 +248,29 @@
             state = JSON.parse(historyStack[historyStack.length - 1]);
             selectedIndices.clear();
             applyUIState(); render(); calculateAI();
-            localStorage.setItem('magicLamiV14', JSON.stringify(state));
+            localStorage.setItem('magicLamiV15', JSON.stringify(state));
+        }
+    }
+
+    function resetGame() {
+        if(confirm("🚨 清空这局记录重新开始？")) {
+            localStorage.removeItem('magicLamiV15');
+            location.reload();
         }
     }
 
     function applyUIState() {
         setSuit(state.curS, state.curC, document.querySelector(`#suit-btns button:nth-child(${suitOrder[state.curS]})`), false);
         switchPlayer(state.activeP, false);
-        if (state.antiPeep) document.body.classList.add('anti-peep'); else document.body.classList.remove('anti-peep');
     }
 
-    function toggleAntiPeep() { state.antiPeep = !state.antiPeep; applyUIState(); saveState(); }
-    function toggleMinimap() { state.minimap = !state.minimap; document.getElementById('table-area').classList.toggle('minimap', state.minimap); saveState(); }
-    function exportState() { alert("当前残局数据已生成 (可复制):\n" + btoa(JSON.stringify(state.tableGroups))); } 
-
-    // --- 核心算法：未知库余量计算 (Dark Forest Core) ---
     function getWildCount(suit, rank) {
         if (!rank) return 0;
-        let total = 2; // 两副牌
+        let total = 2; 
         let inHand = state.myHand.filter(c => c.suit === suit && c.rank === rank).length;
         let onTable = 0;
         state.tableGroups.forEach(g => g.cards.forEach(c => { if (c.suit === suit && c.rank === rank) onTable++; }));
-        // 盖牌是暗盖，无法追踪具体牌，只能追踪已知明牌
         return Math.max(0, total - inHand - onTable);
-    }
-
-    function updateIntel() {
-        if(!state.isGameStarted) return;
-        let intelArr = [];
-        Object.keys(rankVal).filter(k=>k!=='Joker'&&k!=='Spacer').forEach(r => {
-            ['♠️','♥️','♣️','♦️'].forEach(s => {
-                let inHand = state.myHand.filter(c=>c.suit===s && c.rank===r).length;
-                let wild = getWildCount(s, r);
-                if (wild === 0 && inHand === 0) intelArr.push(`${s}${r}`); 
-            });
-        });
-        document.getElementById('intel-txt').innerText = intelArr.length > 0 ? "⚠️ 彻底绝张: " + intelArr.join(" | ") : "🤖 监控全场 106 张牌流向...";
     }
 
     function getPenalty(card) {
@@ -298,7 +297,7 @@
         if(rs.every(c=>c.rank===rs[0].rank)) return rs[0].rank; 
         let firstRealIdx = groupCards.findIndex(c=>c.rank!=='Joker');
         let val = (getVal(groupCards[firstRealIdx].rank) - firstRealIdx) + jIdx;
-        return numToRStr(val);
+        return getRankByVal(val) || val;
     }
 
     function smartSort(cards) {
@@ -365,6 +364,7 @@
         if(save) saveState();
     }
 
+    // 录入动作
     function inputRank(r) {
         const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : r === 'Spacer' ? {suit:'none', rank:'Spacer', color:'black'} : {suit:state.curS, rank:r, color:state.curC};
         if (state.activeP === 0) {
@@ -376,7 +376,7 @@
                 else if (r !== 'Spacer') state.oppBuffer.push(card);
             }
         }
-        render(); updateProgress(); saveState();
+        render(); saveState();
     }
 
     function recordKouPai() {
@@ -392,11 +392,16 @@
         let rVal = getVal(r);
         document.getElementById('qi-title-txt').innerText = `预测 P${state.activeP+1} 出牌 (${state.curS}${r})`;
         let html = '';
-        if (rVal <= 11) html += `<button class="qi-btn" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${getRankByVal(rVal+1)}', '${getRankByVal(rVal+2)}'])">顺子 3 张: ${state.curS}[${r}, ${numToRStr(rVal+1)}, ${numToRStr(rVal+2)}]</button>`;
-        if (rVal <= 10) html += `<button class="qi-btn" style="background:#d84315;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${getRankByVal(rVal+1)}', '${getRankByVal(rVal+2)}', '${getRankByVal(rVal+3)}'])">顺子 4 张: ${state.curS}[${r}...${numToRStr(rVal+3)}]</button>`;
-        if (rVal <= 12) html += `<button class="qi-btn" style="background:#bf360c;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${getRankByVal(rVal+1)}', 'Joker'])">带鬼牌: ${state.curS}[${r}, ${numToRStr(rVal+1)}, 🤡]</button>`;
+        
+        let r2 = getRankByVal(rVal+1), r3 = getRankByVal(rVal+2), r4 = getRankByVal(rVal+3);
+        
+        if (rVal <= 11) html += `<button class="qi-btn" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}'])">顺子 3 张: ${state.curS}[${r}, ${r2}, ${r3}]</button>`;
+        if (rVal <= 10) html += `<button class="qi-btn" style="background:#d84315;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}', '${r4}'])">顺子 4 张: ${state.curS}[${r}...${r4}]</button>`;
+        if (rVal <= 12) html += `<button class="qi-btn" style="background:#bf360c;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌: ${state.curS}[${r}, ${r2}, 🤡]</button>`;
+        
         html += `<button class="qi-btn" style="background:#f57c00;" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">斩牌 3 张: [${r}, ${r}, ${r}]</button>`;
         html += `<button class="qi-btn" style="background:#e65100;" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">斩牌 4 张: [${r}, ${r}, ${r}, ${r}]</button>`;
+        
         document.getElementById('qi-options').innerHTML = html;
         document.getElementById('quick-input-modal').style.display = 'flex';
     }
@@ -413,6 +418,7 @@
         state.oppCounts[state.activeP] -= cards.length;
         closeQuickInput(true); switchPlayer(0); 
     }
+    
     function closeQuickInput(isSuccess) {
         document.getElementById('quick-input-modal').style.display = 'none';
         if (!isSuccess && tempPendingCard) state.oppBuffer.push(tempPendingCard);
@@ -423,10 +429,19 @@
         if (state.isGameStarted) return;
         let count = state.myHand.filter(c=>c.rank!=='Spacer').length;
         state.oppCounts[0] = count;
-        document.getElementById('hand-count-txt').innerText = `${count} / 20`;
-        document.getElementById('setup-progress-fill').style.width = `${(count/20)*100}%`;
-        document.getElementById('start-game-btn').style.display = (count >= 20) ? 'block' : 'none';
-        document.getElementById('setup-progress-bar').style.display = (count >= 20) ? 'none' : 'block';
+        // 关键修复：确保进度条正确更新且不会崩溃
+        let txtEl = document.getElementById('hand-count-txt');
+        if(txtEl) txtEl.innerText = `${count} / 20`;
+        
+        let fillEl = document.getElementById('setup-progress-fill');
+        if(fillEl) fillEl.style.width = `${(count/20)*100}%`;
+        
+        let startBtn = document.getElementById('start-game-btn');
+        let pBar = document.getElementById('setup-progress-bar');
+        if(startBtn && pBar) {
+            startBtn.style.display = (count >= 20) ? 'block' : 'none';
+            pBar.style.display = (count >= 20) ? 'none' : 'block';
+        }
     }
 
     function startGame() {
@@ -518,14 +533,22 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // --- 🏆 AI 黑暗森林战术引擎 (Priority Logic) ---
+    // --- AI 战术大脑 (强制去重与面值转化) ---
     function calculateAI() {
         const panel = document.getElementById('ai-panel');
         panel.innerHTML = "";
         if (!state.isGameStarted) return;
 
         let hints = []; 
-        const addUniqueHint = (hintObj) => { if (!hints.some(h => h.txt === hintObj.txt)) hints.push(hintObj); };
+        let hintTextSet = new Set(); // 核心：绝对指纹去重验证池
+        
+        const addUniqueHint = (hintObj) => { 
+            if (!hintTextSet.has(hintObj.txt)) {
+                hintTextSet.add(hintObj.txt);
+                hints.push(hintObj); 
+            }
+        };
+
         const suits = ['♠️','♥️','♣️','♦️'];
         const jokers = state.myHand.filter(c => c.rank === 'Joker');
 
@@ -536,40 +559,42 @@
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
-                        addUniqueHint({ priority: 3, css: 'hint-normal', txt: `🟢 破冰: ${s}[${numToRStr(v)},${numToRStr(v+1)},${numToRStr(v+2)}]`, 
-                            cards: [{suit:s, rank:getRankByVal(v)}, {suit:s, rank:getRankByVal(v+1)}, {suit:s, rank:getRankByVal(v+2)}] });
+                        let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                        if(r1 && r2 && r3) {
+                            addUniqueHint({ priority: 3, css: 'hint-normal', txt: `🟢 破冰: ${s}[${r1},${r2},${r3}]`, 
+                                cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, {suit:s, rank:r3}] });
+                        }
                     }
                 }
             });
         } else {
             document.getElementById('phase-text').innerText = "🔥 自由博弈中";
             
-            // 战术接牌评估
+            // 接牌判定
             state.tableGroups.forEach((g, gIdx) => {
                 let bounds = getGroupBounds(g.cards);
                 if (!bounds) return;
                 state.myHand.filter(c=>c.rank!=='Joker'&&c.rank!=='Spacer').forEach(h => {
                     let wildCount = getWildCount(h.suit, h.rank);
-                    let prio = 3, css = 'hint-normal', prefix = '🟡';
-                    let suffix = '';
+                    let prio = 3, css = 'hint-normal', prefix = '🟡', suffix = '';
 
                     if (bounds.type === 'set' && h.rank === bounds.rank && g.cards.length < 4 && !bounds.suits.includes(h.suit)) {
-                        if (wildCount > 0) { prio = 1; css = 'hint-urgent'; prefix = '🔥 抢接(斩)'; suffix = ' (防截胡)'; }
-                        else { prio = 4; css = 'hint-safe'; prefix = '🔒 垄断(斩)'; suffix = ' (绝对安全)'; }
+                        if (wildCount > 0) { prio = 1; css = 'hint-urgent'; prefix = '🔥 抢接(斩)'; suffix = ' (防被抢)'; }
+                        else { prio = 4; css = 'hint-safe'; prefix = '🔒 垄断(斩)'; suffix = ' (绝安全)'; }
                         addUniqueHint({ priority: prio, css: css, type: 'append', txt: `${prefix}: [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组${suffix}`, handCard: h, group: g });
                     }
                     else if (bounds.type === 'run' && h.suit === bounds.suit) {
                         let hV = getVal(h.rank);
                         if (hV === bounds.first - 1 || hV === bounds.last + 1) {
-                            if (wildCount > 0) { prio = 1; css = 'hint-urgent'; prefix = '🔥 抢接(顺)'; suffix = ' (防截胡)'; }
-                            else { prio = 4; css = 'hint-safe'; prefix = '🔒 垄断(顺)'; suffix = ' (绝对安全)'; }
+                            if (wildCount > 0) { prio = 1; css = 'hint-urgent'; prefix = '🔥 抢接(顺)'; suffix = ' (防被抢)'; }
+                            else { prio = 4; css = 'hint-safe'; prefix = '🔒 垄断(顺)'; suffix = ' (绝安全)'; }
                             addUniqueHint({ priority: prio, css: css, type: 'append', txt: `${prefix}: [${h.suit}${h.rank}] 贴第 ${gIdx+1} 组${suffix}`, handCard: h, group: g });
                         }
                     }
                 });
             });
 
-            // 战术新组评估
+            // 新组判定
             suits.forEach(s => {
                 let uniqueNums = [...new Set(state.myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
@@ -578,10 +603,14 @@
                         let w1 = getRankByVal(v-1) ? getWildCount(s, getRankByVal(v-1)) : 0;
                         let w2 = getRankByVal(v+3) ? getWildCount(s, getRankByVal(v+3)) : 0;
                         let prio = 3, css = 'hint-normal', prefix = '🟡 新组', suffix = '';
-                        if (w1+w2 === 0) { prio = 2; css = 'hint-safe'; prefix = '🟢 安全新组'; suffix = ' (两端封死)'; }
+                        if (w1+w2 === 0) { prio = 2; css = 'hint-safe'; prefix = '🟢 安全顺子'; suffix = ' (两端封死)'; }
                         else if (w1+w2 >= 2) { prio = 5; css = 'hint-danger'; prefix = '🔴 危险投喂'; suffix = ' (易被接走)'; }
-                        addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${prefix}: ${s}[${numToRStr(v)}..${numToRStr(v+2)}]${suffix}`, 
-                            cards: [{suit:s, rank:getRankByVal(v)}, {suit:s, rank:getRankByVal(v+1)}, {suit:s, rank:getRankByVal(v+2)}] });
+                        
+                        let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
+                        if(r1 && r2 && r3) {
+                            addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${prefix}: ${s}[${r1},${r2},${r3}]${suffix}`, 
+                                cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, {suit:s, rank:r3}] });
+                        }
                     }
                 }
             });
@@ -605,13 +634,12 @@
             });
         }
 
-        // 排序规则：优先级数字越小越靠前
         hints.sort((a, b) => a.priority - b.priority);
 
         hints.forEach(hint => {
             const div = document.createElement('div');
             div.className = `hint-item ${hint.css}`;
-            let btnTxt = hint.priority === 1 ? '立刻抢接' : hint.priority === 5 ? '无视警告打出' : '执行';
+            let btnTxt = hint.priority === 1 ? '立刻抢接' : '执行';
             
             if (hint.type === 'ice' || hint.type === 'new') {
                 div.innerHTML = `<span>${hint.txt}</span><button class="hint-btn">${btnTxt}</button>`;
@@ -636,14 +664,14 @@
             panel.appendChild(div);
         });
 
-        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem; text-align:center; padding:5px;'>暂无推荐，看死牌保分</div>";
+        if (panel.innerHTML === "") panel.innerHTML = "<div style='color:#aaa; font-size:0.8rem; text-align:center; padding:5px;'>暂无战术推荐，看死牌保分</div>";
     }
 
     function render() {
         document.getElementById('action-bar').style.display = (selectedIndices.size > 0 && state.isGameStarted && state.activeP === 0) ? 'flex' : 'none';
         
-        if (state.isGameStarted) { groupHand(); updateIntel(); } 
-        else { updateProgress(); }
+        if (state.isGameStarted) groupHand();
+        else updateProgress(); // 调用修复后的更新逻辑
 
         for(let i=0; i<4; i++) {
             let tab = document.getElementById(`tab-${i}`);
@@ -665,7 +693,10 @@
         }).join('');
         
         document.getElementById('penalty-score').innerText = `罚分: ${penaltySum}`;
-        if (state.isGameStarted) document.getElementById('hand-count-txt').innerText = `${state.myHand.filter(c=>c.rank!=='Spacer').length} 张剩余`;
+        if (state.isGameStarted) {
+            let txtEl = document.getElementById('hand-count-txt');
+            if(txtEl) txtEl.innerText = `${state.myHand.filter(c=>c.rank!=='Spacer').length} 张剩余`;
+        }
 
         document.getElementById('buffer-cards').innerHTML = state.oppBuffer.map((c, i) => `<div class="card ${c.color}" onclick="removeBufferCard(${i})"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
 
@@ -702,6 +733,15 @@
                     </div>`).join('')}
             </div>`;
         }).join('');
+        document.getElementById('pool-stat').innerText = `总出牌: ${totalOut} 张`;
+    }
+
+    // 独立的方法：计算场上和废牌堆的数量
+    function countInWorld(suit, rank) {
+        let count = 0;
+        state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
+        state.discardPool.forEach(c => { if(c.suit === suit && c.rank === rank) count++; });
+        return count;
     }
 
     window.onload = () => loadState();
