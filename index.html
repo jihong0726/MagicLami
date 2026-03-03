@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V16</title>
+    <title>MagicLami V17</title>
     <style>
         :root { --p1-color: #4caf50; --opp-color: #ff9800; --bg-dark: #072a1e; --bg-table: rgba(0,0,0,0.3); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -96,12 +96,20 @@
         .btn-active-suit { background: #fff !important; box-shadow: inset 0 0 0 3px var(--p1-color); }
         .k-btn.spacer-btn { background: #444; color: white; box-shadow: 0 3px 0 #111; font-size: 0.8rem;} 
 
-        /* 快捷面板 */
+        /* 🔥 V17 升级：智能排列快捷面板 */
         #quick-input-modal { display:none; position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100; flex-direction:column; align-items:center; justify-content:center; }
-        .qi-box { background:#1e1e1e; padding:15px; border-radius:10px; width:90%; max-width:350px; border: 2px solid #ff9800;}
-        .qi-title { color:#ffeb3b; margin-bottom:12px; text-align:center; font-size: 1rem;}
-        .qi-btn { width:100%; padding:12px; margin-bottom:8px; background:#e65100; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:0.95rem; box-shadow: 0 3px 0 #bf360c;}
-        .qi-btn-cancel { background:#444; box-shadow: 0 3px 0 #222; margin-top: 5px; }
+        .qi-box { background:#1e1e1e; padding:20px; border-radius:12px; width:92%; max-width:340px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.8);}
+        .qi-title { color:#fff; margin-bottom:15px; text-align:center; font-size: 1.05rem; border-bottom: 1px solid #333; padding-bottom: 12px;}
+        .qi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .qi-grid.full { grid-template-columns: 1fr; }
+        .qi-btn { padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.4; color: white; cursor: pointer; }
+        .qi-btn:active { transform: translateY(2px); box-shadow: none !important; }
+        .qi-btn small { font-weight: normal; opacity: 0.85; font-size: 0.75rem; margin-top: 4px; }
+        .btn-run { background: #2196f3; box-shadow: 0 3px 0 #1565c0; }
+        .btn-run-long { background: #0288d1; box-shadow: 0 3px 0 #01579b; }
+        .btn-joker { background: #9c27b0; box-shadow: 0 3px 0 #6a1b9a; }
+        .btn-set { background: #ff9800; box-shadow: 0 3px 0 #e65100; }
+        .qi-btn-cancel { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 6px; font-weight: bold; margin-top: 5px; box-shadow: 0 3px 0 #222; cursor: pointer;}
 
         /* 拆牌弹窗 */
         #split-modal { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#333; padding:15px; border-radius:8px; z-index:50; border: 2px solid #4caf50; flex-direction: column; gap: 10px; width: 80%; text-align: center;}
@@ -189,9 +197,9 @@
 
     <div id="quick-input-modal">
         <div class="qi-box">
-            <h3 class="qi-title" id="qi-title-txt">对手出牌预测</h3>
+            <h3 class="qi-title" id="qi-title-txt">预测对手出牌</h3>
             <div id="qi-options"></div>
-            <button class="qi-btn qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动编辑</button>
+            <button class="qi-btn-cancel" onclick="closeQuickInput(false)">进入暂存区手动编辑</button>
         </div>
     </div>
 
@@ -228,11 +236,11 @@
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV16', JSON.stringify(state));
+        localStorage.setItem('magicLamiV17', JSON.stringify(state));
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV16');
+        const saved = localStorage.getItem('magicLamiV17');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -246,13 +254,13 @@
             state = JSON.parse(historyStack[historyStack.length - 1]);
             selectedIndices.clear();
             applyUIState(); render(); calculateAI();
-            localStorage.setItem('magicLamiV16', JSON.stringify(state));
+            localStorage.setItem('magicLamiV17', JSON.stringify(state));
         }
     }
 
     function resetGame() {
         if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV16');
+            localStorage.removeItem('magicLamiV17');
             location.reload();
         }
     }
@@ -384,20 +392,40 @@
         }
     }
 
+    // --- 🔥 V17 升级：智能网格预测面板 ---
     function showQuickInputModal(r) {
         tempPendingCard = {suit:state.curS, rank:r, color:state.curC};
         let rVal = getVal(r);
-        document.getElementById('qi-title-txt').innerText = `预测 P${state.activeP+1} 出牌 (${state.curS}${r})`;
-        let html = '';
         
+        let colorStyle = state.curC === 'red' ? '#ff5252' : '#4caf50';
+        document.getElementById('qi-title-txt').innerHTML = `预测 P${state.activeP+1} 出牌<br><span style="color:${colorStyle}; font-size:1.4rem; display:inline-block; margin-top:5px;">${state.curS} ${r}</span>`;
+        
+        // 核心锁定逻辑：如果该玩家剩余 20 张牌，则他尚未破冰，强制锁定顺子
+        let isOppIceBreaking = state.oppCounts[state.activeP] === 20;
+        
+        let html = '';
         let r2 = getRankByVal(rVal+1), r3 = getRankByVal(rVal+2), r4 = getRankByVal(rVal+3);
         
-        if (rVal <= 11) html += `<button class="qi-btn" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}'])">顺子 3 张: ${state.curS}[${r}, ${r2}, ${r3}]</button>`;
-        if (rVal <= 10) html += `<button class="qi-btn" style="background:#d84315;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}', '${r4}'])">顺子 4 张: ${state.curS}[${r}...${r4}]</button>`;
-        if (rVal <= 12) html += `<button class="qi-btn" style="background:#bf360c;" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌: ${state.curS}[${r}, ${r2}, 🤡]</button>`;
+        // 顺子区 (蓝色)
+        html += '<div class="qi-grid">';
+        if (rVal <= 11) html += `<button class="qi-btn btn-run" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}'])">顺子 3 张<small>${state.curS}[${r}, ${r2}, ${r3}]</small></button>`;
+        if (rVal <= 10) html += `<button class="qi-btn btn-run-long" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', '${r3}', '${r4}'])">顺子 4 张<small>${state.curS}[${r}...${r4}]</small></button>`;
+        html += '</div>';
+
+        // 鬼牌区 (紫色)
+        if (rVal <= 12) {
+            html += `<div class="qi-grid full"><button class="qi-btn btn-joker" onclick="execQuickInput('run', '${state.curS}', ['${r}', '${r2}', 'Joker'])">带鬼牌 (顺)<small>${state.curS}[${r}, ${r2}, 🤡]</small></button></div>`;
+        }
         
-        html += `<button class="qi-btn" style="background:#f57c00;" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">斩牌 3 张: [${r}, ${r}, ${r}]</button>`;
-        html += `<button class="qi-btn" style="background:#e65100;" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">斩牌 4 张: [${r}, ${r}, ${r}, ${r}]</button>`;
+        // 斩牌区 (橙色) - 仅在非破冰阶段显示
+        if (!isOppIceBreaking) {
+            html += '<div class="qi-grid" style="margin-top: 10px;">';
+            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}'])">斩牌 3 张<small>[${r}, ${r}, ${r}]</small></button>`;
+            html += `<button class="qi-btn btn-set" onclick="execQuickInput('set', null, ['${r}', '${r}', '${r}', '${r}'])">斩牌 4 张<small>[${r}, ${r}, ${r}, ${r}]</small></button>`;
+            html += '</div>';
+        } else {
+            html += '<div style="margin-top:12px; margin-bottom: 5px; font-size:0.75rem; color:#888; text-align:center;">🔒 该玩家尚未破冰，必须出顺子</div>';
+        }
         
         document.getElementById('qi-options').innerHTML = html;
         document.getElementById('quick-input-modal').style.display = 'flex';
@@ -530,7 +558,7 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // --- AI 大脑引擎 (全视野修复版) ---
+    // --- AI 大脑引擎 (精准去重与规则恢复) ---
     function calculateAI() {
         const panel = document.getElementById('ai-panel');
         panel.innerHTML = "";
@@ -557,7 +585,6 @@
                     let v = uniqueNums[i];
                     let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
                     
-                    // 1. 天然顺子破冰
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
                         if(r1 && r2 && r3) {
                             addUniqueHint({ priority: 3, css: 'hint-normal', type: 'ice', txt: `🟢 破冰(纯顺): ${s}[${r1},${r2},${r3}]`, 
@@ -565,14 +592,11 @@
                         }
                     }
                     
-                    // 2. 鬼牌顺子破冰 (V16 修复点)
                     if (jokers.length > 0) {
-                        // 缺尾巴
                         if (uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
                             if(r1 && r2) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'ice', txt: `🟡 破冰(含鬼): ${s}[${r1},${r2},🤡]`, 
                                 cards: [{suit:s, rank:r1}, {suit:s, rank:r2}, jokers[0]] });
                         }
-                        // 缺中间
                         if (!uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
                             if(r1 && r3) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'ice', txt: `🟡 破冰(含鬼): ${s}[${r1},🤡,${r3}]`, 
                                 cards: [{suit:s, rank:r1}, jokers[0], {suit:s, rank:r3}] });
@@ -583,7 +607,6 @@
         } else {
             document.getElementById('phase-text').innerText = "🔥 自由博弈中";
             
-            // 接牌判定
             state.tableGroups.forEach((g, gIdx) => {
                 let bounds = getGroupBounds(g.cards);
                 if (!bounds) return;
@@ -607,14 +630,12 @@
                 });
             });
 
-            // 新组判定 (V16 加入鬼牌新组支持)
             suits.forEach(s => {
                 let uniqueNums = [...new Set(state.myHand.filter(c => c.suit === s).map(c => getVal(c.rank)))].sort((a,b)=>a-b);
                 for(let i=0; i < uniqueNums.length; i++) {
                     let v = uniqueNums[i];
                     let r1 = getRankByVal(v), r2 = getRankByVal(v+1), r3 = getRankByVal(v+2);
                     
-                    // 天然新组
                     if (uniqueNums.includes(v+1) && uniqueNums.includes(v+2)) {
                         if(r1 && r2 && r3) {
                             let risk = (getWildCount(s, getRankByVal(v-1)) > 0) || (getWildCount(s, getRankByVal(v+3)) > 0);
@@ -626,7 +647,6 @@
                         }
                     }
 
-                    // 鬼牌新组
                     if (jokers.length > 0) {
                         if (uniqueNums.includes(v+1) && !uniqueNums.includes(v+2)) {
                             if(r1 && r2) addUniqueHint({ priority: 4, css: 'hint-safe', type: 'new', txt: `🟡 新组(含鬼): ${s}[${r1},${r2},🤡]`, 
@@ -640,7 +660,6 @@
                 }
             });
 
-            // 斩牌新组
             Object.keys(rankVal).filter(k=>k!=='Joker'&&k!=='Spacer').forEach(r => {
                 let sameRanks = state.myHand.filter(c => c.rank === r);
                 let uniqueSuits = new Set(), validZhan = [];
@@ -656,7 +675,6 @@
                     addUniqueHint({ priority: prio, css: css, type: 'new', txt: `${txt}: [${r},${r},${r}]`, cards: validZhan.slice(0,3) });
                 }
                 
-                // 鬼牌斩牌
                 if (validZhan.length === 2 && jokers.length > 0) {
                     addUniqueHint({ priority: 4, css: 'hint-safe', type: 'new', txt: `🟡 新组(含鬼斩): [${r},${r},🤡]`, cards: [validZhan[0], validZhan[1], jokers[0]] });
                 }
