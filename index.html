@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V25 - 极客算力版</title>
+    <title>MagicLami V26 - 逻辑解封版</title>
     <style>
         :root { 
             --p1-color: #4caf50; --opp-color: #ff9800; 
@@ -45,7 +45,7 @@
         .card.grouped-meld { box-shadow: 0 0 0 2px #81c784, 1px 3px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #e8f5e9, #c8e6c9); }
         .card.dead-card { filter: grayscale(1) brightness(0.6); opacity: 0.7; }
 
-        /* 🔥 AI 反馈横幅 (支持 MCTS) */
+        /* AI 反馈横幅 */
         #ai-banner { display: none; background: rgba(0,0,0,0.8); border-left: 4px solid #00e676; padding: 12px; margin: 0 10px 10px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px); line-height: 1.4;}
         .ai-hl-text { color: #00e676; font-weight: 900; font-size: 0.95rem; margin-bottom: 4px; display: block;}
 
@@ -58,7 +58,7 @@
         #setup-progress-bar { height: 8px; background: rgba(0,0,0,0.6); border-radius: 4px; overflow: hidden; margin-bottom: 8px;}
         #setup-progress-fill { height: 100%; background: linear-gradient(90deg, #ffd54f, #ffb300); width: 0%; transition: width 0.3s; }
         
-        /* 🔥 MCTS 极限计算控制区 */
+        /* MCTS 极限计算控制区 */
         #ai-trigger-zone { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); display: none;}
         .slider-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; color: #bbb;}
         #mcts-time-slider { flex: 1; margin: 0 10px; accent-color: #ff9800; }
@@ -209,12 +209,12 @@
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV25', JSON.stringify(state));
+        localStorage.setItem('magicLamiV26', JSON.stringify(state));
         document.getElementById('ai-banner').style.display = 'none';
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV25');
+        const saved = localStorage.getItem('magicLamiV26');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -229,13 +229,13 @@
             selectedIndices.clear();
             document.getElementById('ai-banner').style.display = 'none';
             applyUIState(); render(); 
-            localStorage.setItem('magicLamiV25', JSON.stringify(state));
+            localStorage.setItem('magicLamiV26', JSON.stringify(state));
         }
     }
 
     function resetGame() {
         if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV25');
+            localStorage.removeItem('magicLamiV26');
             location.reload();
         }
     }
@@ -407,7 +407,7 @@
     }
 
     function inputRank(r) {
-        const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : {suit:state.curS, rank:r, color:state.curC};
+        const card = r === 'Joker' ? {suit:'🤡', rank:'Joker', color:'joker'} : r === 'Spacer' ? {suit:'none', rank:'Spacer', color:'black'} : {suit:state.curS, rank:r, color:state.curC};
         if (state.activeP === 0) {
             if (!state.isGameStarted) {
                 if (state.myHand.length < 20) state.myHand.push(card);
@@ -416,7 +416,7 @@
                 state.myHand.push(card); 
             }
         } else {
-            if (state.isGameStarted) state.oppBuffer.push(card); 
+            if (state.isGameStarted && r !== 'Spacer') state.oppBuffer.push(card); 
         }
         render(); saveState();
     }
@@ -435,9 +435,10 @@
         let sortedIndices = Array.from(selectedIndices).sort((a,b)=>b-a);
         let selectedCards = sortedIndices.map(idx => state.myHand[idx]);
         
+        // 1. 尝试当做新组打出
         if (isValidMeld(selectedCards)) {
             if (!state.isBroken && selectedCards.filter(c=>c.rank!=='Joker').every((c,i,arr)=>c.rank===arr[0].rank)) { 
-                alert("⛔ 破冰第一手必须是同花顺！"); return; 
+                alert("⛔ 破冰第一手必须是同花顺，不能是群组！"); return; 
             }
             sortedIndices.forEach(idx => state.myHand.splice(idx, 1));
             state.tableGroups.push({ owner: 0, cards: smartSort(selectedCards) });
@@ -448,6 +449,7 @@
             return;
         }
 
+        // 2. 尝试贴牌
         let bestTargetGIdx = -1;
         for (let i=0; i<state.tableGroups.length; i++) {
             let g = state.tableGroups[i];
@@ -511,7 +513,7 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // ====================== 🚀 V25 极限计算引擎：Web Worker + ISMCTS ======================
+    // ====================== 🚀 V26 解封：极限计算引擎 (MCTS) ======================
     let aiWorker = null;
     let currentMCTSRequestId = 0;
     let progressInterval;
@@ -616,12 +618,11 @@
                 let jCount = jokers.length;
                 const suits = ['♠️','♥️','♣️','♦️'];
 
-                // 1. 新组顺子
+                // 1. 新组顺子 (V26 解封：破冰也允许鬼牌参与)
                 suits.forEach(s => {
                     let realInSuit = reals.filter(c => c.suit === s);
                     let runActs = findDynamicRuns(s, realInSuit, jCount);
                     runActs.forEach(a => {
-                        if (!isBroken && a.gaps > 0) return; 
                         actions.push({ cards: a.cards, type: 'new' });
                     });
                 });
@@ -668,7 +669,6 @@
                     });
                 }
                 
-                // 去重
                 let uniqueActs = [];
                 let seen = new Set();
                 actions.forEach(a => {
@@ -681,11 +681,11 @@
             function simulateRollout(hand, table) {
                 let score = 0;
                 let currentHand = [...hand];
-                for(let i=0; i<8; i++){  // 模拟未来深度 8 步
+                for(let i=0; i<8; i++){  
+                    // 模拟接下来的局面，此时 isBroken 永远为 true
                     let acts = generateLegalActions(currentHand, table, true);
                     if(!acts.length) break;
                     
-                    // 贪心启发：尽量用掉最高罚分的牌，且少用鬼牌
                     acts.sort((a,b) => {
                         let scoreA = a.cards.reduce((sum, c) => sum + getPenalty(c), 0) - (a.cards.filter(c=>c.rank==='Joker').length * 200);
                         let scoreB = b.cards.reduce((sum, c) => sum + getPenalty(c), 0) - (b.cards.filter(c=>c.rank==='Joker').length * 200);
@@ -718,7 +718,6 @@
 
                 while (Date.now() - start < timeLimit * 1000) {
                     iters++;
-                    // 随机挑一个初始动作
                     let action = rootActions[Math.floor(Math.random() * rootActions.length)];
                     
                     let remainingHand = [...myHand];
@@ -727,8 +726,10 @@
                         if(idx > -1) remainingHand.splice(idx, 1);
                     });
 
-                    // Rollout
+                    // V26 强力修正：如果没破冰，加 20000 极端渴望分！
                     let baseScore = action.cards.reduce((sum, c) => sum + getPenalty(c), 0) * 10 - (action.cards.filter(c=>c.rank==='Joker').length * 500);
+                    if (!isBroken) baseScore += 20000; 
+                    
                     let simScore = baseScore + simulateRollout(remainingHand, tableGroups); 
                     
                     if (simScore > bestScore) {
@@ -794,10 +795,8 @@
             return;
         }
         
-        // 自动选中最佳牌
         selectedIndices.clear();
         bestAction.cards.forEach(c => {
-            // 找到同花色同数字的未被选中的牌
             let idx = state.myHand.findIndex((h, i) => h.suit === c.suit && h.rank === c.rank && !selectedIndices.has(i));
             if (idx > -1) selectedIndices.add(idx);
         });
@@ -806,7 +805,7 @@
         
         document.getElementById('ai-banner').style.display = 'block';
         document.getElementById('ai-banner').innerHTML = `
-            <span class="ai-hl-text">🎯 MCTS 终极解法 (推演 ${iterations} 次 | 胜率 ${winRate})</span>
+            <span class="ai-hl-text">🎯 MCTS 极限解法 (推演 ${iterations} 次 | 胜率 ${winRate})</span>
             最优出牌：[${displayStr}]<br>
             <span style="font-size:0.75rem;font-weight:normal;color:#bbb;">👉 牌已为您自动选中，点击下方绿色大按钮直接上桌！</span>
         `;
@@ -878,6 +877,12 @@
             </div>`;
         }).join('');
         document.getElementById('pool-stat').innerText = `桌面: ${totalOut} 张`;
+    }
+
+    function countInWorld(suit, rank) {
+        let count = 0;
+        state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
+        return count;
     }
 
     window.onload = () => loadState();
