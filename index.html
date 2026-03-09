@@ -3,92 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MagicLami V27 - 极简刺客版</title>
+    <title>MagicLami V29</title>
     <style>
         :root { 
-            --p1-color: #4caf50; --opp-color: #ff9800; 
-            --bg-felt: radial-gradient(circle at top, #1c2b4a 0%, #080d1a 100%); 
-            --bg-wood: linear-gradient(to bottom, #4e342e, #2e1c18); 
-            --wood-edge: #271410;
+            /* Rummy Pop 同款配色 */
+            --bg-felt: radial-gradient(circle at top, #2e4370 0%, #111a33 100%); 
+            --bg-wood: linear-gradient(to bottom, #8d5524, #5c3a21); 
+            --wood-edge: #3e2723;
+            --btn-green: linear-gradient(to bottom, #66bb6a, #2e7d32);
+            --btn-green-shadow: #1b5e20;
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Segoe UI', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden; color: white; }
         #app-container { width: 100%; max-width: 480px; background: var(--bg-felt); display: flex; flex-direction: column; height: 100%; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
 
-        /* 极简顶部工具栏 */
-        #sys-toolbar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 6px 8px; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 20;}
-        .sys-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ddd; padding: 6px 10px; border-radius: 6px; font-weight: bold; transition: all 0.1s; cursor: pointer; }
-        .sys-btn:active { transform: translateY(2px); background: rgba(255,255,255,0.2); }
-        .btn-next-turn { background: linear-gradient(to bottom, #42a5f5, #1565c0); border: none; box-shadow: 0 2px 0 #0d47a1; margin-left: auto; margin-right: 8px;}
-        .btn-next-turn:active { transform: translateY(2px); box-shadow: none; }
+        /* 顶部极简信息栏 */
+        #sys-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 8px 12px; font-size: 0.8rem; z-index: 20; border-bottom: 1px solid rgba(255,255,255,0.1);}
+        .sys-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: all 0.1s; }
+        .sys-btn:active { transform: translateY(2px); background: rgba(255,255,255,0.25); }
+        .btn-next-turn { background: linear-gradient(to bottom, #42a5f5, #1565c0); border: none; box-shadow: 0 3px 0 #0d47a1; margin-left: auto; margin-right: 10px;}
+        .btn-next-turn:active { transform: translateY(3px); box-shadow: none; }
 
-        /* 玩家席位区 */
-        #player-hub { display: flex; background: rgba(0,0,0,0.3); padding: 4px; gap: 4px; z-index: 10;}
-        .p-tab { flex: 1; padding: 6px 0; text-align: center; border-radius: 6px; font-size: 0.8rem; font-weight: 900; color: #888; background: rgba(0,0,0,0.4); border: 1px solid transparent; cursor: pointer; transition: all 0.2s;}
-        .p-tab.active { color: #fff; background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 2px 0 #2e7d32; border: 1px solid #a5d6a7; transform: translateY(-1px);}
-        .p-tab.active.opp { background: linear-gradient(to bottom, #ffa726, #f57c00); box-shadow: 0 2px 0 #e65100; border: 1px solid #ffcc80; }
-        .p-count { font-size: 0.65rem; display: block; opacity: 0.9; margin-top: 1px; font-weight: bold;}
+        /* 玩家头像区 (类似游戏顶部的头像状态) */
+        #player-hub { display: flex; background: rgba(0,0,0,0.2); padding: 8px 10px; gap: 8px; justify-content: space-around; z-index: 10;}
+        .p-tab { flex: 1; padding: 8px 0; text-align: center; border-radius: 12px; font-size: 0.85rem; font-weight: 900; color: #888; background: rgba(0,0,0,0.5); border: 2px solid transparent; cursor: pointer; transition: all 0.2s; position: relative;}
+        .p-tab.active { color: #fff; background: var(--btn-green); box-shadow: 0 4px 0 var(--btn-green-shadow); border: 2px solid #a5d6a7; transform: translateY(-2px);}
+        .p-tab.active.opp { background: linear-gradient(to bottom, #ffa726, #f57c00); box-shadow: 0 4px 0 #e65100; border: 2px solid #ffcc80; }
+        .p-count { font-size: 0.7rem; display: block; opacity: 0.9; margin-top: 2px; font-weight: bold;}
+        .p-tab.danger { animation: flashDanger 1s infinite alternate; }
+        @keyframes flashDanger { from { border-color: #ff5252; box-shadow: 0 0 10px #ff5252; } to { border-color: transparent; box-shadow: none; } }
 
         /* 桌面区 */
-        #table-area { flex: 1; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .meld-group { background: rgba(0,0,0,0.35); padding: 10px; border-radius: 10px; display: flex; flex-wrap: wrap; border: 1px solid rgba(255,255,255,0.05); position: relative; gap: 4px; cursor: pointer; transition: all 0.2s;}
-        .owner-tag { position: absolute; right: 6px; top: 4px; font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 900;}
+        #table-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; position: relative; }
+        .meld-group { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; display: flex; flex-wrap: wrap; border: 1px solid rgba(255,255,255,0.05); gap: 4px; transition: all 0.2s;}
+        .owner-tag { font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: bold; position: absolute; right: 8px; top: 8px;}
 
-        /* 卡牌设计 */
-        .card { background: linear-gradient(to bottom, #ffffff, #e0e0e0); border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 34px; height: 50px; font-weight: 900; font-size: 1.05rem; box-shadow: 1px 2px 4px rgba(0,0,0,0.5); border: none; color: #111; position: relative; transition: all 0.1s; pointer-events: none; }
+        /* 🎴 现代大圆角卡牌 */
+        .card { background: linear-gradient(to bottom, #ffffff, #e0e0e0); border-radius: 8px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 40px; height: 58px; font-weight: 900; font-size: 1.2rem; box-shadow: 1px 4px 6px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,1); color: #111; position: relative; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
         .card.red { color: #d32f2f; }
         .card.joker { color: #f57f17; font-size: 0.8rem; background: linear-gradient(to bottom, #fffde7, #fff59d); border: 2px solid #fbc02d;}
-        .card.spacer { background: transparent; border: 1px dashed rgba(255,255,255,0.2); box-shadow: none; color: transparent; width: 10px; }
+        .joker-tag { position: absolute; top: -6px; right: -6px; background: #9c27b0; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);}
         
-        #hand-display .card, #buffer-cards .card, .meld-group .card { pointer-events: auto; cursor: pointer; }
-        .card.selected { transform: translateY(-8px) scale(1.05); box-shadow: 0 8px 12px rgba(0,0,0,0.8), 0 0 0 3px #ffeb3b !important; z-index: 10; }
-        .card.grouped-meld { box-shadow: 0 0 0 2px #81c784, 1px 2px 4px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #e8f5e9, #c8e6c9); }
-        .card.dead-card { filter: grayscale(1) brightness(0.6); opacity: 0.6; }
+        /* 选中态：上浮发光 */
+        .card.selected { transform: translateY(-12px); box-shadow: 0 12px 15px rgba(0,0,0,0.8), 0 0 0 3px #ffeb3b; z-index: 10; }
+        .card.dead-card { filter: grayscale(1) brightness(0.7); opacity: 0.8; }
 
-        /* 悬浮战术横幅 */
-        #ai-banner { display: none; background: rgba(0,0,0,0.85); border-left: 4px solid #00e676; padding: 10px; margin: 0 8px 8px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.5); line-height: 1.4;}
-        .ai-hl-text { color: #00e676; font-weight: 900; font-size: 0.95rem; margin-bottom: 2px; display: block;}
+        /* 💬 教练提示气泡 (Rummy Pop 风格) */
+        #coach-bubble { display: none; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: #fffde7; color: #3e2723; padding: 12px 16px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 10px 20px rgba(0,0,0,0.6); z-index: 50; width: 85%; border: 3px solid #ffb300; line-height: 1.4;}
+        #coach-bubble::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-width: 10px 10px 0; border-style: solid; border-color: #ffb300 transparent transparent transparent; }
+        .coach-title { color: #d84315; font-size: 1rem; font-weight: 900; margin-bottom: 4px; display: block;}
 
-        /* 底部原木手牌区 */
-        #player-area { padding: 8px; background: var(--bg-wood); display: flex; flex-direction: column; position: relative; border-top: 4px solid var(--wood-edge); box-shadow: 0 -4px 15px rgba(0,0,0,0.8); z-index: 30;}
-        #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .header-title { font-size: 0.85rem; color: #d7ccc8; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.8);}
-        .header-right { display: flex; gap: 8px; align-items: center; }
-        .penalty-txt { color: #ff8a80; font-weight: 900; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(255,138,128,0.2);} 
-        #hand-count-txt { font-weight:900; color:#ffeb3b; font-size:0.9rem;}
+        /* 🪵 底部原木牌架 */
+        #player-area { height: 45vh; background: var(--bg-wood); padding: 12px; display: flex; flex-direction: column; position: relative; border-top: 6px solid var(--wood-edge); box-shadow: 0 -8px 20px rgba(0,0,0,0.8); z-index: 30;}
         
-        /* 极简瞬发按钮 */
-        #ai-trigger-zone { margin-bottom: 8px; }
-        #btn-get-hint { width: 100%; padding: 12px; background: linear-gradient(to bottom, #fbc02d, #f57f17); color: #212121; font-weight: 900; font-size: 1.05rem; border: none; border-radius: 8px; box-shadow: 0 4px 0 #e65100; cursor: pointer; transition: transform 0.1s; }
-        #btn-get-hint:active { transform: translateY(4px); box-shadow: none; }
-
-        /* 3D 大按钮 */
-        #action-bar { display: none; gap: 8px; margin-bottom: 8px; }
-        .act-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 900; font-size: 1rem; color: white; cursor: pointer; transition: transform 0.1s;}
-        .btn-play { background: linear-gradient(to bottom, #66bb6a, #43a047); box-shadow: 0 4px 0 #2e7d32; }
-        .btn-play:active { transform: translateY(4px); box-shadow: none; }
-        .btn-delete { background: linear-gradient(to bottom, #ef5350, #e53935); box-shadow: 0 4px 0 #c62828; flex: 0.4; }
-        .btn-delete:active { transform: translateY(4px); box-shadow: none; }
-
-        /* 对手直录区 */
-        #opp-buffer-zone { display: none; background: rgba(0,0,0,0.6); border: 2px dashed #ffb300; border-radius: 8px; padding: 8px; margin-bottom: 8px; align-items: center; justify-content: space-between;}
-        #buffer-cards { display: flex; flex-wrap: wrap; min-height: 52px; flex: 1; gap: 4px;}
-        #buffer-confirm-btn { background: linear-gradient(to bottom, #ffa726, #f57c00); color: #fff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 900; font-size:1rem; height: 100%; margin-left: 8px; box-shadow: 0 4px 0 #e65100; cursor: pointer;}
-        #buffer-confirm-btn:active { transform: translateY(4px); box-shadow: none; }
+        #hand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .header-title { font-size: 0.9rem; color: #fff; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
+        .penalty-txt { color: #ff8a80; font-weight: 900; font-size: 0.85rem; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);} 
 
         /* 手牌槽 */
-        #hand-display { flex: 1; min-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 8px; gap: 4px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.7); }
+        #hand-display { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 25px 10px 10px 10px; display: flex; flex-wrap: wrap; align-content: flex-start; margin-bottom: 8px; gap: 6px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);}
         
-        /* 键盘区更紧凑 */
-        .keyboard-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 4px; }
+        /* 🕹️ 核心：超大出牌按钮 (绝对定位在牌架右侧) */
+        #btn-play-action { display: none; position: absolute; right: 15px; top: -25px; background: var(--btn-green); color: white; border: none; padding: 15px 25px; border-radius: 30px; font-weight: 900; font-size: 1.2rem; box-shadow: 0 6px 0 var(--btn-green-shadow), 0 10px 20px rgba(0,0,0,0.6); cursor: pointer; transition: all 0.1s; z-index: 40;}
+        #btn-play-action:active { transform: translateY(6px); box-shadow: 0 0 0 var(--btn-green-shadow), 0 2px 4px rgba(0,0,0,0.6); }
+
+        /* 💡 提示按钮 */
+        #btn-hint { position: absolute; left: 15px; top: -20px; background: linear-gradient(to bottom, #ffca28, #f57f17); color: #3e2723; border: none; padding: 10px 18px; border-radius: 20px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 0 #e65100, 0 8px 15px rgba(0,0,0,0.5); cursor: pointer; z-index: 40; display: none;}
+        #btn-hint:active { transform: translateY(4px); box-shadow: none;}
+
+        /* 紧凑键盘区 (用于快速录入) */
+        #input-keyboard { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; margin-top: auto;}
+        .keyboard-row { display: grid; grid-template-columns: repeat(4, 1fr) 2fr; gap: 4px; margin-bottom: 4px; }
         .ranks-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .k-btn { background: linear-gradient(to bottom, #f5f5f5, #e0e0e0); border: none; border-radius: 6px; font-weight: 900; padding: 10px 0; box-shadow: 0 3px 0 #9e9e9e; color: #222; font-size: 1.1rem; cursor: pointer;}
+        .k-btn { background: linear-gradient(to bottom, #f5f5f5, #e0e0e0); border: none; border-radius: 6px; font-weight: 900; padding: 10px 0; box-shadow: 0 3px 0 #9e9e9e; color: #222; font-size: 1rem; cursor: pointer;}
         .k-btn:active { transform: translateY(3px); box-shadow: none; }
         .k-btn.red { color: #d32f2f; }
         .k-btn.joker { background: linear-gradient(to bottom, #fff59d, #fbc02d); box-shadow: 0 3px 0 #f57f17; }
         .btn-active-suit { background: #fff !important; box-shadow: 0 1px 0 #9e9e9e, inset 0 0 0 3px var(--p1-color); transform: translateY(2px);}
-        .k-btn.spacer-btn { background: linear-gradient(to bottom, #757575, #424242); color: white; box-shadow: 0 3px 0 #212121; font-size: 0.8rem;} 
+        
+        /* 纠错与暗盖按钮 */
+        .util-btn { background: linear-gradient(to bottom, #ef5350, #c62828); color: white; border: none; box-shadow: 0 3px 0 #b71c1c; border-radius: 6px; font-weight: bold;}
+        .util-btn:active { transform: translateY(3px); box-shadow: none;}
+
+        #opp-buffer-zone { display: none; background: rgba(0,0,0,0.6); border: 2px dashed #ffb300; border-radius: 8px; padding: 10px; margin-bottom: 10px; align-items: center; justify-content: space-between;}
+        #buffer-cards { display: flex; flex-wrap: wrap; min-height: 52px; flex: 1; gap: 4px;}
+        #buffer-confirm-btn { background: linear-gradient(to bottom, #ffa726, #f57c00); color: #fff; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 900; height: 100%; margin-left: 8px; box-shadow: 0 4px 0 #e65100; cursor: pointer;}
+        #buffer-confirm-btn:active { transform: translateY(4px); box-shadow: none; }
+
     </style>
 </head>
 <body>
@@ -96,7 +98,8 @@
 <div id="app-container">
     <div id="sys-toolbar">
         <button class="sys-btn" onclick="undo()">↩️ 撤回</button>
-        <button class="sys-btn btn-next-turn" onclick="nextTurn()">⏭️ 结束回合</button>
+        <span id="phase-text" style="font-weight:900; color:#ffeb3b;">⚖️ 洗牌录入中...</span>
+        <button class="sys-btn btn-next-turn" onclick="nextTurn()">⏭️ 结束回合(下一家)</button>
         <button class="sys-btn" onclick="resetGame()" style="color:#ff8a80; border-color:rgba(255,138,128,0.4);">🔄 重置</button>
     </div>
 
@@ -108,31 +111,24 @@
     </div>
 
     <div id="table-area">
-        <div id="ai-banner"></div>
         <div id="table-content"></div>
+        <div id="coach-bubble"></div>
     </div>
 
     <div id="player-area">
+        <button id="btn-hint" onclick="getCoachHint()">💡 提示</button>
+        <button id="btn-play-action" onclick="playSelectedAsNewGroup()">出牌</button>
+
         <div id="hand-header">
-            <span class="header-title" id="hand-title">我的手牌</span>
+            <span class="header-title" id="hand-title">我的手牌区</span>
             <div style="display:flex; gap:10px; align-items:center;">
                 <span class="penalty-txt" id="penalty-score">罚分: 0</span>
-                <span id="hand-count-txt">0 / 20</span>
             </div>
         </div>
         
-        <div id="ai-trigger-zone">
-            <button id="btn-get-hint" onclick="instantAI()">💡 战术扫描：一键选中最佳牌</button>
-        </div>
-
-        <div id="action-bar">
-            <button class="act-btn btn-play" onclick="playSelectedAsNewGroup()">⬆️ 打出 / 贴牌</button>
-            <button class="act-btn btn-delete" onclick="deleteSelectedCards()">❌ 丢弃(纠错)</button>
-        </div>
-
         <div id="opp-buffer-zone">
             <div id="buffer-cards"></div>
-            <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️ 上桌</button>
+            <button id="buffer-confirm-btn" onclick="confirmOpponentBuffer()">✔️ 确认上桌</button>
         </div>
 
         <div id="hand-display" onclick="switchPlayer(0)"></div>
@@ -143,7 +139,7 @@
                 <button class="k-btn red" onclick="setSuit('♥️','red', this)">♥️</button>
                 <button class="k-btn" onclick="setSuit('♣️','black', this)">♣️</button>
                 <button class="k-btn red" onclick="setSuit('♦️','red', this)">♦️</button>
-                <button class="k-btn spacer-btn" onclick="inputRank('Spacer')">➖隔板</button>
+                <button class="k-btn util-btn" onclick="deleteSelectedCards()">❌ 纠错(删牌)</button>
             </div>
             <div class="ranks-grid">
                 <button class="k-btn" onclick="inputRank('A')">A</button>
@@ -169,7 +165,7 @@
     // --- 核心状态 ---
     const DEFAULT_STATE = {
         myHand: [], tableGroups: [], oppBuffer: [],
-        oppCounts: [20, 20, 20, 20], discardPool: [],
+        oppCounts: [20, 20, 20, 20],
         activeP: 0, isGameStarted: false, isBroken: false, 
         curS: '♠️', curC: 'black'
     };
@@ -178,12 +174,11 @@
     let historyStack = [];
     let selectedIndices = new Set();
     
-    // AI 缓存
     let currentHintCycle = 0;
     let allHintsCache = [];
 
-    const rankVal = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker':99, 'Spacer':0 };
-    const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5, 'none':99 };
+    const rankVal = { 'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'Joker':99 };
+    const suitOrder = { '♠️':1, '♥️':2, '♣️':3, '♦️':4, '🤡':5 };
 
     function getVal(r) { return rankVal[r] || 0; }
     function getRankByVal(val) { if (val === 14) return 'A'; return Object.keys(rankVal).find(k => rankVal[k] === val); }
@@ -192,12 +187,12 @@
     function saveState() {
         if(historyStack.length > 20) historyStack.shift();
         historyStack.push(JSON.stringify(state));
-        localStorage.setItem('magicLamiV27', JSON.stringify(state));
-        clearHints(); 
+        localStorage.setItem('magicLamiV29', JSON.stringify(state));
+        hideCoach();
     }
     
     function loadState() {
-        const saved = localStorage.getItem('magicLamiV27');
+        const saved = localStorage.getItem('magicLamiV29');
         if (saved) {
             try { state = JSON.parse(saved); historyStack.push(saved); applyUIState(); } 
             catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
@@ -205,24 +200,24 @@
         render(); 
     }
 
-    function clearHints() {
+    function hideCoach() {
+        document.getElementById('coach-bubble').style.display = 'none';
         allHintsCache = [];
-        document.getElementById('ai-banner').style.display = 'none';
     }
 
     function undo() {
         if (historyStack.length > 1) {
             historyStack.pop(); 
             state = JSON.parse(historyStack[historyStack.length - 1]);
-            selectedIndices.clear(); clearHints();
+            selectedIndices.clear(); hideCoach();
             applyUIState(); render(); 
-            localStorage.setItem('magicLamiV27', JSON.stringify(state));
+            localStorage.setItem('magicLamiV29', JSON.stringify(state));
         }
     }
 
     function resetGame() {
         if(confirm("🚨 清空这局记录重新开始？")) {
-            localStorage.removeItem('magicLamiV27');
+            localStorage.removeItem('magicLamiV29');
             location.reload();
         }
     }
@@ -232,23 +227,22 @@
         switchPlayer(state.activeP, false);
     }
 
-    function getWildCount(suit, rank) {
-        if (!rank || rank === 'Spacer') return 0;
+    function getWildCount(suit, rank, hand, tableGroups) {
+        if (!rank) return 0;
         let total = 2; 
-        let inHand = state.myHand.filter(c => c.suit === suit && c.rank === rank).length;
+        let inHand = hand.filter(c => c.suit === suit && c.rank === rank).length;
         let onTable = 0;
-        state.tableGroups.forEach(g => g.cards.forEach(c => { if (c.suit === suit && c.rank === rank) onTable++; }));
+        tableGroups.forEach(g => g.cards.forEach(c => { if (c.suit === suit && c.rank === rank) onTable++; }));
         return Math.max(0, total - inHand - onTable);
     }
 
     function getPenalty(card) {
-        if(card.rank === 'Joker' || card.rank === 'Spacer') return 0;
+        if(card.rank === 'Joker') return 0;
         if(card.rank === 'A') return 15;
         if(['J','Q','K'].includes(card.rank)) return 10;
         return getVal(card.rank);
     }
 
-    // 🛡️ 严格规则验证
     function isValidMeld(cards) {
         if(cards.length < 3) return false;
         let reals = cards.filter(c => c.rank !== 'Joker');
@@ -308,81 +302,60 @@
         let js = cards.filter(c => c.rank === 'Joker');
         let rs = cards.filter(c => c.rank !== 'Joker');
         if(rs.length === 0) return js;
+        
         if(rs.every(c => c.rank === rs[0].rank)) return [...rs.sort((a,b)=>suitOrder[a.suit]-suitOrder[b.suit]), ...js];
+        
         if(rs.every(c => c.suit === rs[0].suit)) {
-            rs.sort((a,b) => {
-                let va = getVal(a.rank), vb = getVal(b.rank);
-                if (va === 1 && vb > 10) return 1;
-                if (vb === 1 && va > 10) return -1;
-                return va - vb;
-            });
+            rs.forEach(c => { c.tempVal = (getVal(c.rank) === 1 && rs.some(r=>getVal(r.rank)>10)) ? 14 : getVal(c.rank); });
+            rs.sort((a,b) => a.tempVal - b.tempVal);
+            
+            let firstVal = rs[0].tempVal;
+            let lastVal = rs[rs.length-1].tempVal;
             let res = [];
-            let expect = getVal(rs[0].rank);
-            if (expect === 1 && rs.some(c=>getVal(c.rank)>10)) expect = 14;
-            rs.forEach(c => {
-                let curVal = getVal(c.rank);
-                if (curVal === 1 && expect > 10) curVal = 14;
-                if (curVal === expect - 1) res.push(c); 
-                else { while (curVal > expect && js.length > 0) { res.push(js.pop()); expect++; } res.push(c); expect = curVal + 1; }
-            });
-            return [...res, ...js];
+            let currentVal = firstVal;
+            let rsIdx = 0;
+            
+            while(currentVal <= lastVal) {
+                if (rs[rsIdx] && rs[rsIdx].tempVal === currentVal) {
+                    res.push(rs[rsIdx]);
+                    rsIdx++;
+                } else {
+                    if(js.length > 0) res.push(js.pop());
+                }
+                currentVal++;
+            }
+            
+            while(js.length > 0) {
+                if (firstVal > 1 && res[0].rank !== 'A') { res.unshift(js.pop()); firstVal--; } 
+                else if (lastVal < 14 && res[res.length-1].rank !== 'A') { res.push(js.pop()); lastVal++; } 
+                else { res.push(js.pop()); }
+            }
+            res.forEach(c => delete c.tempVal);
+            return res;
         }
         return [...rs.sort((a,b)=>getVal(a.rank)-getVal(b.rank)), ...js];
     }
 
     function groupHand() {
-        state.myHand.forEach(c => c.groupId = null);
-        let groupCounter = 1;
-        let reals = state.myHand.filter(c => c.rank !== 'Joker' && c.rank !== 'Spacer');
-        
-        ['♠️','♥️','♣️','♦️'].forEach(suit => {
-            let suitCards = reals.filter(c => c.suit === suit);
-            let vals = [...new Set(suitCards.map(c => getVal(c.rank)))].sort((a,b)=>a-b);
-            if (vals.includes(1)) vals.push(14); 
-            vals.sort((a,b) => a - b);
-            
-            for (let i = 0; i < vals.length - 2; i++) {
-                if (vals[i+1] === vals[i]+1 && vals[i+2] === vals[i]+2) {
-                    let runVals = [vals[i], vals[i+1], vals[i+2]];
-                    let j = i + 3;
-                    while(j < vals.length && vals[j] === runVals[runVals.length-1] + 1) { runVals.push(vals[j]); j++; }
-                    
-                    runVals.forEach(v => {
-                        let targetRank = v === 14 ? 'A' : getRankByVal(v);
-                        let c = suitCards.find(card => card.rank === targetRank && card.groupId === null);
-                        if(c) c.groupId = groupCounter;
-                    });
-                    groupCounter++;
-                }
-            }
-        });
-        
-        Object.keys(rankVal).filter(k=>k!=='Joker').forEach(r => {
-            let rCards = reals.filter(c => c.rank === r && c.groupId === null);
-            let uniqueSuits = new Set(), validZhan = [];
-            rCards.forEach(c => { if(!uniqueSuits.has(c.suit)) { uniqueSuits.add(c.suit); validZhan.push(c); }});
-            if(validZhan.length >= 3) { validZhan.forEach(c => c.groupId = groupCounter); groupCounter++; }
-        });
-
         state.myHand.sort((a, b) => {
-            if (a.groupId && !b.groupId) return -1;
-            if (!a.groupId && b.groupId) return 1;
-            if (a.groupId && b.groupId && a.groupId !== b.groupId) return a.groupId - b.groupId;
-            return suitOrder[a.suit] - suitOrder[b.suit] || getVal(a.rank) - getVal(b.rank);
+            if(a.rank==='Joker' && b.rank!=='Joker') return 1;
+            if(a.rank!=='Joker' && b.rank==='Joker') return -1;
+            let va = getVal(a.rank), vb = getVal(b.rank);
+            return suitOrder[a.suit] - suitOrder[b.suit] || va - vb;
         });
     }
 
     // --- 交互与流转 ---
     function switchPlayer(p, save = true) {
-        state.activeP = p; selectedIndices.clear(); clearHints();
+        state.activeP = p; selectedIndices.clear(); hideCoach();
         document.querySelectorAll('.p-tab').forEach((t, i) => t.className = `p-tab ${i===p?'active':''} ${i>0 && i===p?'opp':''}`);
         document.getElementById('opp-buffer-zone').style.display = (p > 0 && state.isGameStarted) ? 'flex' : 'none';
-        document.getElementById('hand-display').classList.toggle('active', p === 0);
+        document.getElementById('input-keyboard').style.display = (p > 0 && !state.isGameStarted) ? 'none' : 'block';
         if(save) { render(); saveState(); }
     }
 
     function nextTurn() {
-        if(!state.isGameStarted) { alert("游戏尚未开始！"); return; }
+        if(!state.isGameStarted) { alert("请先录满 20 张手牌开局！"); return; }
         state.activeP = (state.activeP + 1) % 4;
         switchPlayer(state.activeP);
     }
@@ -403,7 +376,7 @@
                 state.myHand.push(card); 
             }
         } else {
-            if (state.isGameStarted && r !== 'Spacer') state.oppBuffer.push(card); 
+            if (state.isGameStarted) state.oppBuffer.push(card); 
         }
         render(); saveState();
     }
@@ -414,6 +387,7 @@
             if (selectedIndices.has(index)) selectedIndices.delete(index); 
             else selectedIndices.add(index); 
         }
+        hideCoach();
         render(); 
     }
 
@@ -430,8 +404,7 @@
             state.tableGroups.push({ owner: 0, cards: smartSort(selectedCards) });
             state.oppCounts[0] -= selectedCards.length;
             selectedIndices.clear(); state.isBroken = true; 
-            document.getElementById('ai-banner').style.display = 'none';
-            render(); saveState();
+            hideCoach(); render(); saveState();
             return;
         }
 
@@ -448,18 +421,16 @@
             targetG.cards.push(...selectedCards);
             targetG.cards = smartSort(targetG.cards);
             state.oppCounts[0] -= selectedCards.length;
-            selectedIndices.clear(); 
-            document.getElementById('ai-banner').style.display = 'none';
-            render(); saveState();
+            selectedIndices.clear(); hideCoach(); render(); saveState();
             return;
         }
-        alert("⛔ 无法构成合法新组，也无法贴到桌面上！");
+        alert("⛔ 无法构成合法牌组，也无法贴到桌面的牌组中！");
     }
 
     function deleteSelectedCards() {
         if(confirm("确定丢弃手牌？")) {
             Array.from(selectedIndices).sort((a,b)=>b-a).forEach(idx => state.myHand.splice(idx, 1));
-            selectedIndices.clear(); document.getElementById('ai-banner').style.display = 'none'; render(); saveState();
+            selectedIndices.clear(); hideCoach(); render(); saveState();
         }
     }
 
@@ -475,8 +446,7 @@
     }
     function removeBufferCard(index) { state.oppBuffer.splice(index, 1); render(); saveState(); }
 
-    // ====================== 🚀 V27 极限瞬发贪婪引擎 (Instant Beam Search) ======================
-    // 彻底修复：鬼牌将精确放置在占位点，UI 呈现完美逻辑 (如 🤡 10 J)
+    // ====================== 🚀 V29 冠军级控盘大脑 (The Champion Logic) ======================
     function findDynamicRuns(suit, realCardsInSuit, totalJokers) {
         let candidates = [];
         let vals = [...new Set(realCardsInSuit.map(c => getVal(c.rank)))];
@@ -495,60 +465,15 @@
                         if (c) hintCards.push(c);
                     } else {
                         gaps++;
-                        // 核心修复：精准记录鬼牌的逻辑面值
                         hintCards.push({ suit: '🤡', rank: 'Joker', color: 'joker', logicalVal: v }); 
                     }
                 }
-                // 必须包含至少一张真牌
                 if (gaps <= totalJokers && gaps < len) {
-                    candidates.push({ cards: hintCards, suit: suit });
+                    candidates.push({ cards: hintCards, suit: suit, gaps: gaps });
                 }
             }
         }
         return candidates;
-    }
-
-    function instantAI() {
-        if(!state.isGameStarted || state.activeP !== 0) { alert("请先录满20张手牌并切换回P1！"); return; }
-        
-        if (allHintsCache.length === 0) {
-            allHintsCache = generateAllHints();
-            currentHintCycle = 0;
-        }
-        
-        if (allHintsCache.length === 0) {
-            document.getElementById('ai-banner').style.display = 'block';
-            document.getElementById('ai-banner').innerHTML = "⚠️ <span class='ai-hl-text'>暂无安全出牌路线</span> 建议等待或收集情报。";
-            return;
-        }
-
-        let hint = allHintsCache[currentHintCycle];
-        
-        // 选中
-        selectedIndices.clear();
-        let handCopy = [...state.myHand]; // 防止同种牌多次选中
-        hint.cards.forEach(c => {
-            let targetRank = c.rank;
-            let targetSuit = c.suit;
-            if (c.rank === 'Joker') { targetRank = 'Joker'; targetSuit = '🤡'; }
-            
-            let hcIdx = handCopy.findIndex(hc => hc && hc.suit === targetSuit && hc.rank === targetRank);
-            if (hcIdx > -1) {
-                selectedIndices.add(hcIdx);
-                handCopy[hcIdx] = null; // 标记已选
-            }
-        });
-
-        let displayStr = hint.cards.map(c => c.rank === 'Joker' ? '🤡' : `${c.suit}${c.rank}`).join(' ');
-        
-        document.getElementById('ai-banner').style.display = 'block';
-        document.getElementById('ai-banner').innerHTML = `
-            <span class="ai-hl-text">💡 最佳战术：${hint.txt}</span>
-            <span style="font-size:0.75rem;color:#bbb;">已自动选中 [${displayStr}] (减 ${hint.pointsCleared} 分)。<br>👉 点击绿色按钮上桌，或再点黄按钮切下一方案。</span>
-        `;
-        
-        currentHintCycle = (currentHintCycle + 1) % allHintsCache.length;
-        render();
     }
 
     function generateAllHints() {
@@ -558,23 +483,21 @@
             if (!hintsMap.has(key)) hintsMap.set(key, hint);
         };
 
-        let handReals = state.myHand.filter(c => c.rank !== 'Joker' && c.rank !== 'Spacer');
+        let handReals = state.myHand.filter(c => c.rank !== 'Joker');
         let jokers = state.myHand.filter(c => c.rank === 'Joker');
+        let jCount = jokers.length;
         const suits = ['♠️','♥️','♣️','♦️'];
 
-        // 1. 顺子
         suits.forEach(s => {
             let realInSuit = handReals.filter(c => c.suit === s);
-            let runActs = findDynamicRuns(s, realInSuit, jokers.length);
+            let runActs = findDynamicRuns(s, realInSuit, jCount);
             runActs.forEach(a => {
-                let jCount = a.cards.filter(c=>c.rank==='Joker').length;
-                let txt = jCount > 0 ? `${s}顺子(含鬼)` : `${s}顺子`;
-                addHint({ cards: a.cards, type: 'new', meldType: 'run', suit: s, txt: txt });
+                if (!state.isBroken && a.gaps > 0) return; // 破冰不许用鬼牌
+                addHint({ cards: a.cards, type: 'new', meldType: 'run', suit: s});
             });
         });
 
         if (state.isBroken) {
-            // 2. 斩牌
             let uniqueRanks = [...new Set(handReals.map(c=>c.rank))];
             uniqueRanks.forEach(r => {
                 let sameRanks = handReals.filter(c => c.rank === r);
@@ -583,12 +506,10 @@
                 sameRanks.forEach(c => {
                     if (!seenSuits.has(c.suit)) { seenSuits.add(c.suit); uniqueSuitsCards.push(c); }
                 });
-                
-                if (uniqueSuitsCards.length >= 3) addHint({ cards: uniqueSuitsCards.slice(0,4), type: 'new', meldType: 'set', txt: `群组 [${r}]` });
-                if (uniqueSuitsCards.length >= 2 && jokers.length > 0) addHint({ cards: [...uniqueSuitsCards.slice(0,3), jokers[0]], type: 'new', meldType: 'set', txt: `群组(含鬼) [${r}]` });
+                if (uniqueSuitsCards.length >= 3) addHint({ cards: uniqueSuitsCards.slice(0,4), type: 'new', meldType: 'set' });
+                if (uniqueSuitsCards.length >= 2 && jCount > 0) addHint({ cards: [...uniqueSuitsCards.slice(0,3), jokers[0]], type: 'new', meldType: 'set' });
             });
 
-            // 3. 贴牌
             state.tableGroups.forEach((g, i) => {
                 let bounds = getGroupBounds(g.cards);
                 if (!bounds) return;
@@ -596,18 +517,16 @@
                     let missingSuits = suits.filter(s => !bounds.suits.includes(s));
                     missingSuits.forEach(ms => {
                         let match = handReals.find(c => c.suit === ms && c.rank === bounds.rank);
-                        if (match) addHint({ cards: [match], type: 'append', gIdx: i, txt: `贴入桌上第 ${i+1} 组` });
+                        if (match) addHint({ cards: [match], type: 'append', gIdx: i });
                     });
                 } else if (bounds.type === 'run') {
                     if (bounds.last < 14) {
-                        let nextR = getRankByVal(bounds.last + 1);
-                        let match = handReals.find(c => c.suit === bounds.suit && c.rank === nextR);
-                        if (match) addHint({ cards: [match], type: 'append', gIdx: i, txt: `贴入桌上第 ${i+1} 组` });
+                        let match = handReals.find(c => c.suit === bounds.suit && c.rank === getRankByVal(bounds.last + 1));
+                        if (match) addHint({ cards: [match], type: 'append', gIdx: i });
                     }
                     if (bounds.first > 1) {
-                        let prevR = getRankByVal(bounds.first - 1);
-                        let match = handReals.find(c => c.suit === bounds.suit && c.rank === prevR);
-                        if (match) addHint({ cards: [match], type: 'append', gIdx: i, txt: `贴入桌上第 ${i+1} 组` });
+                        let match = handReals.find(c => c.suit === bounds.suit && c.rank === getRankByVal(bounds.first - 1));
+                        if (match) addHint({ cards: [match], type: 'append', gIdx: i });
                     }
                 }
             });
@@ -615,64 +534,135 @@
         
         let hintsArray = Array.from(hintsMap.values());
         
-        // 贪婪算分
+        // 🧠 Survival Mode (生存模式侦测)
+        let isSurvivalMode = state.oppCounts.slice(1).some(count => count <= 5 && count > 0);
+
         hintsArray.forEach(hint => {
             let score = 0;
             let pointsCleared = hint.cards.reduce((sum, c) => sum + getPenalty(c), 0);
-            score += pointsCleared * 10; 
+            
+            // 如果对手快赢了，清分权重成倍增加！
+            let pointMultiplier = isSurvivalMode ? 50 : 10;
+            score += pointsCleared * pointMultiplier; 
             
             let jokerCount = hint.cards.filter(c => c.rank === 'Joker').length;
-            score -= jokerCount * 500; 
+            // 冠军逻辑：极度不推荐出鬼牌
+            score -= jokerCount * 1000; 
 
             if (!state.isBroken) {
-                score += 10000; 
+                score += 20000; 
+                hint.msg = "教练：太好了，这副同花顺足够我们破冰上桌！";
             } else {
                 if (hint.type === 'append') {
-                    score += 800; 
-                    let wild = hint.cards.reduce((s, c) => s + getWildCount(c.suit, c.rank), 0);
-                    if (wild > 0) score += 300; 
+                    score += 500; // 囤牌爆发：接牌永远好过开新组
+                    let wild = hint.cards.reduce((s, c) => s + getWildCount(c.suit, c.rank, state.myHand, state.tableGroups), 0);
+                    if (wild > 0) {
+                        score += 300; 
+                        hint.msg = "教练：漂亮！赶紧把这张牌贴上去，别让对手抢了。";
+                    } else {
+                        hint.msg = "教练：接牌是安全的策略，逐步清空手牌。";
+                    }
                 } else if (hint.type === 'new') {
                     let safeEnds = 0;
                     if (hint.meldType === 'run') {
                         let firstVal = getVal(hint.cards[0].rank);
                         if (hint.cards[0].rank === 'Joker') firstVal = hint.cards[0].logicalVal;
                         if (firstVal === 1 && hint.cards.some(c=>getVal(c.rank)>10)) firstVal = 14;
-                        
                         let lastVal = getVal(hint.cards[hint.cards.length-1].rank);
                         if (hint.cards[hint.cards.length-1].rank === 'Joker') lastVal = hint.cards[hint.cards.length-1].logicalVal;
                         if (lastVal === 1 && hint.cards.some(c=>getVal(c.rank)>10)) lastVal = 14;
 
-                        if (getWildCount(hint.suit, getRankByVal(firstVal-1)) === 0) safeEnds++;
-                        if (getWildCount(hint.suit, getRankByVal(lastVal+1)) === 0) safeEnds++;
+                        if (getWildCount(hint.suit, getRankByVal(firstVal-1), state.myHand, state.tableGroups) === 0) safeEnds++;
+                        if (getWildCount(hint.suit, getRankByVal(lastVal+1), state.myHand, state.tableGroups) === 0) safeEnds++;
                     } else {
                          let missing = ['♠️','♥️','♣️','♦️'].filter(s => !hint.cards.map(c=>c.suit).includes(s));
-                         let wildCount = 0; missing.forEach(ms => wildCount += getWildCount(ms, hint.cards[0].rank));
+                         let wildCount = 0; missing.forEach(ms => wildCount += getWildCount(ms, hint.cards[0].rank, state.myHand, state.tableGroups));
                          if (wildCount === 0) safeEnds += 2;
                     }
-                    score += safeEnds * 150;
+                    
+                    if (safeEnds >= 1) {
+                        score += 200;
+                        hint.msg = "教练：完美！这组牌打出去两端都被封死了，对手接不了！";
+                    } else {
+                        // 投喂扣分
+                        score -= 200;
+                        hint.msg = "教练：这组牌有点危险，可能会给对手搭桥，但目前只能这么出。";
+                    }
+                    // 长龙加分
                     score += hint.cards.length * 50; 
                 }
             }
+
+            if (isSurvivalMode && pointsCleared > 20) {
+                hint.msg = "🚨 红色警报：对手快赢了！赶紧把这些大牌打出去止损！";
+            }
+
             hint.score = score;
-            hint.pointsCleared = pointsCleared;
         });
 
         hintsArray.sort((a, b) => b.score - a.score);
         return hintsArray;
     }
 
+    function getCoachHint() {
+        if(!state.isGameStarted || state.activeP !== 0) { alert("请先录满20张手牌！"); return; }
+        
+        if (allHintsCache.length === 0) {
+            allHintsCache = generateAllHints();
+            currentHintCycle = 0;
+        }
+        
+        let bubble = document.getElementById('coach-bubble');
+        
+        if (allHintsCache.length === 0) {
+            bubble.style.display = 'block';
+            bubble.innerHTML = "<span class='coach-title'>🤡 小丑教练</span>你手里现在的牌太散了，暂无绝对安全的出牌路线。先捏着牌防守，看对手怎么打！";
+            selectedIndices.clear();
+            render();
+            return;
+        }
+
+        let hint = allHintsCache[currentHintCycle];
+        
+        // 智能黏性选中
+        selectedIndices.clear();
+        let handCopy = [...state.myHand]; 
+        hint.cards.forEach(c => {
+            let targetRank = c.rank;
+            let targetSuit = c.suit;
+            if (c.rank === 'Joker') { targetRank = 'Joker'; targetSuit = '🤡'; }
+            
+            let hcIdx = handCopy.findIndex(hc => hc && hc.suit === targetSuit && hc.rank === targetRank);
+            if (hcIdx > -1) {
+                selectedIndices.add(hcIdx);
+                handCopy[hcIdx] = null; 
+            }
+        });
+
+        bubble.style.display = 'block';
+        bubble.innerHTML = `<span class='coach-title'>🤡 小丑教练</span>${hint.msg}`;
+        
+        currentHintCycle = (currentHintCycle + 1) % allHintsCache.length;
+        render();
+    }
+
     function render() {
-        document.getElementById('action-bar').style.display = (selectedIndices.size > 0 && state.isGameStarted && state.activeP === 0) ? 'flex' : 'none';
-        document.getElementById('ai-trigger-zone').style.display = (state.isGameStarted && state.activeP === 0 && selectedIndices.size === 0) ? 'block' : 'none';
+        let isP1Turn = (state.activeP === 0 && state.isGameStarted);
+        
+        // UI 焦点切换
+        document.getElementById('btn-play-action').style.display = (selectedIndices.size > 0 && isP1Turn) ? 'block' : 'none';
+        document.getElementById('btn-hint').style.display = (isP1Turn && selectedIndices.size === 0) ? 'block' : 'none';
+        document.getElementById('action-bar').style.display = (!state.isGameStarted && selectedIndices.size > 0) ? 'flex' : 'none';
         
         let count = state.myHand.filter(c=>c.rank!=='Spacer').length;
         state.oppCounts[0] = count;
-        document.getElementById('hand-count-txt').innerText = state.isGameStarted ? `剩 ${count} 张` : `${count} / 20`;
         
         if (state.isGameStarted) {
             groupHand();
+            document.getElementById('phase-text').innerText = state.isBroken ? "🔥 你的回合" : "🧊 必须打出同花顺破冰";
             document.getElementById('setup-progress-bar').style.display = 'none';
         } else {
+            document.getElementById('phase-text').innerText = `⚖️ 发牌中 (${count}/20)`;
             document.getElementById('setup-progress-bar').style.display = 'block';
             document.getElementById('setup-progress-fill').style.width = `${(count/20)*100}%`;
         }
@@ -680,17 +670,16 @@
         for(let i=0; i<4; i++) {
             let tab = document.getElementById(`tab-${i}`);
             document.getElementById(`c-p${i}`).innerText = state.oppCounts[i] + '张';
-            if(state.isGameStarted && state.oppCounts[i] <= 2 && state.oppCounts[i] > 0) tab.classList.add('danger');
+            if(state.isGameStarted && state.oppCounts[i] <= 5 && state.oppCounts[i] > 0 && i !== 0) tab.classList.add('danger');
             else tab.classList.remove('danger');
         }
 
         let penaltySum = 0;
         document.getElementById('hand-display').innerHTML = state.myHand.map((c, i) => {
             const isSel = selectedIndices.has(i);
-            const groupClass = c.groupId ? 'grouped-meld' : '';
-            const deadClass = (state.isGameStarted && c.rank!=='Joker' && c.rank!=='Spacer' && getWildCount(c.suit, c.rank) === 0 && countInWorld(c.suit, c.rank) >= 2) ? 'dead-card' : '';
+            const deadClass = (state.isGameStarted && c.rank!=='Joker' && c.rank!=='Spacer' && getWildCount(c.suit, c.rank, state.myHand, state.tableGroups) === 0 && countInWorld(c.suit, c.rank) >= 2) ? 'dead-card' : '';
             penaltySum += getPenalty(c);
-            return `<div class="card ${c.color} ${groupClass} ${deadClass} ${isSel ? 'selected' : ''}" onclick="handleHandCardClick(${i}); event.stopPropagation();">
+            return `<div class="card ${c.color} ${deadClass} ${isSel ? 'selected' : ''}" onclick="handleHandCardClick(${i}); event.stopPropagation();">
                 ${c.rank==='Spacer' ? '' : `<div>${c.suit}</div><div>${c.rank}</div>`}
             </div>`;
         }).join('');
@@ -698,30 +687,24 @@
         document.getElementById('penalty-score').innerText = `罚分: ${penaltySum}`;
         document.getElementById('buffer-cards').innerHTML = state.oppBuffer.map((c, i) => `<div class="card ${c.color}" onclick="removeBufferCard(${i})"><div>${c.suit}</div><div>${c.rank}</div></div>`).join('');
 
-        let validTargetGroups = new Set();
-        if (state.activeP === 0 && selectedIndices.size > 0) {
-            let sortedIndices = Array.from(selectedIndices).sort((a,b)=>b-a);
-            let cardsToAppend = sortedIndices.map(idx => state.myHand[idx]);
-            state.tableGroups.forEach((g, i) => {
-                let tempGroup = [...g.cards, ...cardsToAppend];
-                if(isValidMeld(smartSort(tempGroup))) validTargetGroups.add(i);
-            });
-        }
-
         let totalOut = 0;
         document.getElementById('table-content').innerHTML = state.tableGroups.map((g, i) => {
             totalOut += g.cards.length;
-            const isHighlight = validTargetGroups.has(i);
-            return `<div class="meld-group ${isHighlight ? 'highlight-target' : ''}">
+            return `<div class="meld-group" onclick="handleTableCardClick(${i}, 0, event)">
                 <span class="owner-tag">P${g.owner+1}</span>
                 ${g.cards.map((c, cIdx) => `
-                    <div class="card ${c.color}" onclick="handleTableCardClick(${i}, ${cIdx}, event)">
+                    <div class="card ${c.color}">
                         ${c.rank==='Joker' ? `<div class="joker-tag">${getJokerRealValueStr(g.cards, cIdx)}</div>` : ''}
                         <div>${c.suit}</div><div>${c.rank}</div>
                     </div>`).join('')}
             </div>`;
         }).join('');
-        document.getElementById('pool-stat').innerText = `桌面已出: ${totalOut} 张`;
+    }
+
+    function countInWorld(suit, rank) {
+        let count = 0;
+        state.tableGroups.forEach(g => g.cards.forEach(c => { if(c.suit === suit && c.rank === rank) count++; }));
+        return count;
     }
 
     window.onload = () => loadState();
